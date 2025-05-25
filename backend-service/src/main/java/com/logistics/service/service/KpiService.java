@@ -5,7 +5,10 @@ import com.logistics.service.dao.mapper.RealtimeKpiMapper;
 import com.logistics.service.dto.KpiDataDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -18,27 +21,44 @@ public class KpiService {
     @Autowired
     private RealtimeKpiMapper realtimeKpiMapper;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     /**
-     * 获取指定城市今天的KPI数据
+     * 获取指定城市今天的KPI数据（先 Redis 缓存，缓存未命中再读 MySQL 并写回缓存）
      */
     public List<KpiDataDTO> getTodayKpiByCity(String city) {
         try {
-            log.info("获取城市 {} 今日KPI数据", city);
-
             LocalDate today = LocalDate.now();
-            List<RealtimeKpi> kpiList = realtimeKpiMapper.findBycityAndDate(city, today);
+            String key = "kpi:" + city + ":" + today;
 
-            List<KpiDataDTO> result = new ArrayList<>();
-            for (RealtimeKpi kpi : kpiList) {
-                KpiDataDTO dto = convertToDTO(kpi);
-                result.add(dto);
+            // 1. 尝试从 Redis 缓存读取
+            @SuppressWarnings("unchecked")
+            List<KpiDataDTO> cache = (List<KpiDataDTO>) redisTemplate.opsForValue().get(key);
+            if (cache != null) {
+                log.info("✅ 从 Redis 缓存获取 KPI[city={}, date={}], size={}", city, today, cache.size());
+                return cache;
             }
 
-            log.info("获取到 {} 条KPI记录", result.size());
-            return result;
+            // 2. 缓存未命中，查询 MySQL
+            log.info("🔍 Redis 未命中，查询 MySQL KPI[city={}, date={}]", city, today);
+            List<RealtimeKpi> kpiList = realtimeKpiMapper.findBycityAndDate(city, today);
 
+            // 3. 转换并写回 Redis（30 分钟过期）
+            List<KpiDataDTO> result = kpiList.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+
+            if (!result.isEmpty()) {
+                redisTemplate.opsForValue().set(key, result, 30, TimeUnit.MINUTES);
+                log.info("💾 写入 Redis 缓存 KPI[city={}, date={}]，ttl=30m", city, today);
+            } else {
+                log.warn("⚠️ MySQL 无数据，未写入缓存 city={}, date={}", city, today);
+            }
+
+            return result;
         } catch (Exception e) {
-            log.error("获取KPI数据失败: {}", e.getMessage());
+            log.error("获取KPI数据失败", e);
             return new ArrayList<>();
         }
     }
@@ -85,4 +105,5 @@ public class KpiService {
 
         return dto;
     }
+
 }
