@@ -1,8 +1,8 @@
 # 服务配置
 server:
   port: 8080
-  servlet:
-    context-path: /logistics-api
+#  servlet:
+#    context-path: /logistics-api
 
 spring:
   application:
