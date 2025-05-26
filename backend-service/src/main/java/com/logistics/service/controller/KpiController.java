@@ -59,6 +59,6 @@ public class KpiController {
      */
     @GetMapping("/test")
     public SimpleResponse<String> test() {
-        return SimpleResponse.success("🎉 KPI API 测试成功! 当前时间: " + java.time.LocalDateTime.now());
+        return SimpleResponse.success("KPI API 测试成功! 当前时间: " + java.time.LocalDateTime.now());
     }
 }

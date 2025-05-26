@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class SparkJobLog {
+public class SparkJobLogs {
     private Long id;
     private String jobName;
     private LocalDateTime startTime;
@@ -16,5 +16,7 @@ public class SparkJobLog {
     private Long processedRecords;
     private String errorMessage;
     private Integer executionTimeSeconds;
+    private String timeFormatUsed;
+    private Integer defaultYear;
     private LocalDateTime createdAt;
 }

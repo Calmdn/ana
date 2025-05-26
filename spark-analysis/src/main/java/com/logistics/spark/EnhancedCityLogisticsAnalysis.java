@@ -1,5 +1,6 @@
 package com.logistics.spark;
 
+import com.logistics.spark.monitor.SparkJobMonitor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -32,6 +33,7 @@ public class EnhancedCityLogisticsAnalysis {
     // MySQL连接配置
     private static Properties mysqlProps;
     private static String mysqlUrl;
+    private static SparkJobMonitor jobMonitor; // 添加监控器
 
     public static void main(String[] args) {
         if (args.length != 3) {
@@ -49,6 +51,9 @@ public class EnhancedCityLogisticsAnalysis {
         // 初始化MySQL连接配置
         initMySQLConfig();
 
+        // 初始化监控器
+        jobMonitor = new SparkJobMonitor(mysqlProps, mysqlUrl);
+
         // 初始化Spark会话
         SparkSession spark = SparkSession.builder()
                 .appName("物流分析系统")
@@ -59,11 +64,26 @@ public class EnhancedCityLogisticsAnalysis {
                 .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
                 .getOrCreate();
 
+        Long jobId = null;
+        long totalProcessedRecords = 0;
+        String errorMessage = null;
+        boolean success = false;
+
         try {
             System.out.println("=== 启动增强版物流数据分析 ===");
             System.out.println("配送数据路径: " + deliverPath);
             System.out.println("取件数据路径: " + pickupPath);
             System.out.println("输出路径: " + outputPath);
+
+            // 🚀 开始作业监控
+            jobId = jobMonitor.startJobTracking(
+                    "物流分析系统",
+                    deliverPath,
+                    pickupPath,
+                    outputPath,
+                    "yyyy-MM-dd HH:mm:ss",  // 时间格式
+                    2024  // 默认年份
+            );
 
             // 加载和清洗数据
             Dataset<Row> deliverRaw = spark.read()
@@ -76,13 +96,25 @@ public class EnhancedCityLogisticsAnalysis {
                     .option("inferSchema", "true")
                     .csv(pickupPath);
 
-            System.out.println("原始数据记录数 - 配送: " + deliverRaw.count() + ", 取件: " + pickupRaw.count());
+            long rawDeliverCount = deliverRaw.count();
+            long rawPickupCount = pickupRaw.count();
+            System.out.println("原始数据记录数 - 配送: " + rawDeliverCount + ", 取件: " + rawPickupCount);
+
+            // 📊 更新初始进度
+            jobMonitor.updateJobProgress(jobId, rawDeliverCount + rawPickupCount, "数据加载完成");
 
             // 数据清洗和转换
             Dataset<Row> deliverClean = cleanAndTransformDeliveryData(deliverRaw);
             Dataset<Row> pickupClean = cleanAndTransformPickupData(pickupRaw);
 
-            System.out.println("清洗后数据记录数 - 配送: " + deliverClean.count() + ", 取件: " + pickupClean.count());
+            long cleanDeliverCount = deliverClean.count();
+            long cleanPickupCount = pickupClean.count();
+            totalProcessedRecords = cleanDeliverCount + cleanPickupCount;
+
+            System.out.println("清洗后数据记录数 - 配送: " + cleanDeliverCount + ", 取件: " + cleanPickupCount);
+
+            // 📊 更新清洗后进度
+            jobMonitor.updateJobProgress(jobId, totalProcessedRecords, "数据清洗完成");
 
             // 缓存清洗后的数据
             deliverClean.cache();
@@ -94,46 +126,64 @@ public class EnhancedCityLogisticsAnalysis {
             // 1. 时间效率分析
             System.out.println("📊 执行时间效率分析...");
             generateTimeEfficiencyMetrics(deliverClean, pickupClean, outputPath + "/time_efficiency", spark);
+            jobMonitor.logModuleCompletion(jobId, "时间效率分析", totalProcessedRecords);
 
             // 2. 空间地理分析
-            System.out.println("执行空间地理分析...");
+            System.out.println("🗺️ 执行空间地理分析...");
             generateSpatialAnalysisMetrics(deliverClean, pickupClean, outputPath + "/spatial_analysis", spark);
+            jobMonitor.logModuleCompletion(jobId, "空间地理分析", totalProcessedRecords);
 
             // 3. 运营效率分析
-            System.out.println("执行运营效率分析...");
+            System.out.println("⚡ 执行运营效率分析...");
             generateOperationalEfficiencyMetrics(deliverClean, pickupClean, outputPath + "/operational_efficiency", spark);
+            jobMonitor.logModuleCompletion(jobId, "运营效率分析", totalProcessedRecords);
 
             // 4. 预测分析数据
-            System.out.println("生成预测分析数据...");
+            System.out.println("🔮 生成预测分析数据...");
             generatePredictiveAnalysisData(deliverClean, pickupClean, outputPath + "/predictive_data", spark);
+            jobMonitor.logModuleCompletion(jobId, "预测分析数据", totalProcessedRecords);
 
             // 5. 成本效益分析
-            System.out.println("执行成本效益分析...");
+            System.out.println("💰 执行成本效益分析...");
             generateCostAnalysisMetrics(deliverClean, pickupClean, outputPath + "/cost_analysis", spark);
+            jobMonitor.logModuleCompletion(jobId, "成本效益分析", totalProcessedRecords);
 
             // 6. KPI监控指标
-            System.out.println("生成KPI监控指标...");
+            System.out.println("📈 生成KPI监控指标...");
             generateKPIMetrics(deliverClean, pickupClean, outputPath + "/kpi_metrics", spark);
+            jobMonitor.logModuleCompletion(jobId, "KPI监控指标", totalProcessedRecords);
 
             // 7. 异常检测分析
-            System.out.println("执行异常检测分析...");
+            System.out.println("🔍 执行异常检测分析...");
             generateAnomalyDetectionMetrics(deliverClean, pickupClean, outputPath + "/anomaly_detection", spark);
+            jobMonitor.logModuleCompletion(jobId, "异常检测分析", totalProcessedRecords);
 
             // 8. 综合报表数据
             System.out.println("📋 生成综合报表数据...");
             generateComprehensiveReports(deliverClean, pickupClean, outputPath + "/comprehensive_reports", spark);
+            jobMonitor.logModuleCompletion(jobId, "综合报表数据", totalProcessedRecords);
 
+            // 🎉 作业成功完成
+            success = true;
             System.out.println("\n=== 所有分析模块执行完成 ===");
             System.out.println("增强版物流数据分析成功完成!");
             System.out.println("结果已保存到: " + outputPath);
             System.out.println("数据已同步到MySQL数据库");
 
         } catch (Exception e) {
-            System.err.println("分析过程中发生错误: " + e.getMessage());
+            errorMessage = "分析过程中发生错误: " + e.getMessage();
+            System.err.println(errorMessage);
             e.printStackTrace();
-            System.exit(1);
+            success = false;
         } finally {
+            // 📊 完成作业监控
+            jobMonitor.completeJobTracking(jobId, success, totalProcessedRecords, errorMessage);
+
             spark.stop();
+
+            if (!success) {
+                System.exit(1);
+            }
         }
     }
 
