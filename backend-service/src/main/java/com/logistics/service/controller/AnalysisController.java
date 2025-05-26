@@ -25,7 +25,7 @@ public class AnalysisController {
 
             String result = sparkJobService.executeAnalysisJob();
 
-            return SimpleResponse.success("分析任务已触发", result);
+            return SimpleResponse.success(result);
 
         } catch (Exception e) {
             log.error("💥 触发分析任务失败", e);
