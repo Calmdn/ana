@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.service.dao.mapper.AnomalyAlertMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="AnomalyAlertResultMap" type="com.logistics.service.dao.entity.AnomalyAlert">
+        <id property="id" column="id"/>
+        <result property="anomalyType" column="anomaly_type"/>
+        <result property="city" column="city"/>
+        <result property="orderId" column="order_id"/>
+        <result property="courierId" column="courier_id"/>
+        <result property="anomalySeverity" column="anomaly_severity"/>
+        <result property="anomalyValue" column="anomaly_value"/>
+        <result property="thresholdValue" column="threshold_value"/>
+        <result property="description" column="description"/>
+        <result property="originalTime" column="original_time"/>
+        <result property="analysisDate" column="analysis_date"/>
+        <result property="analysisHour" column="analysis_hour"/>
+        <result property="isResolved" column="is_resolved"/>
+        <result property="resolvedAt" column="resolved_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 通用WHERE条件片段 -->
+    <sql id="whereConditions">
+        <where>
+            <if test="city != null and city != ''">
+                AND city = #{city}
+            </if>
+            <if test="anomalyType != null and anomalyType != ''">
+                AND anomaly_type = #{anomalyType}
+            </if>
+            <if test="severity != null and severity != ''">
+                AND anomaly_severity = #{severity}
+            </if>
+            <if test="courierId != null and courierId != ''">
+                AND courier_id = #{courierId}
+            </if>
+            <if test="orderId != null and orderId != ''">
+                AND order_id = #{orderId}
+            </if>
+            <if test="startDate != null">
+                AND analysis_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND analysis_date &lt;= #{endDate}
+            </if>
+            <if test="isResolved != null">
+                <choose>
+                    <when test="isResolved == true">
+                        AND is_resolved = true
+                    </when>
+                    <otherwise>
+                        AND (is_resolved = false OR is_resolved IS NULL)
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </sql>
+
+    <!-- 插入异常告警 -->
+    <insert id="insertAlert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO anomaly_alerts (
+            anomaly_type, city, order_id, courier_id, anomaly_severity,
+            anomaly_value, threshold_value, description, original_time,
+            analysis_date, analysis_hour, is_resolved
+        ) VALUES (
+                     #{anomalyType}, #{city}, #{orderId}, #{courierId}, #{anomalySeverity},
+                     #{anomalyValue}, #{thresholdValue}, #{description}, #{originalTime},
+                     #{analysisDate}, #{analysisHour}, #{isResolved}
+                 )
+    </insert>
+
+    <!-- 根据ID查找告警 -->
+    <select id="findById" resultMap="AnomalyAlertResultMap">
+        SELECT * FROM anomaly_alerts WHERE id = #{id}
+    </select>
+
+    <!-- 解决告警 -->
+    <update id="resolveAlert">
+        UPDATE anomaly_alerts
+        SET is_resolved = true, resolved_at = #{resolvedAt}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量解决告警 -->
+    <update id="resolveAlertsBatch">
+        UPDATE anomaly_alerts
+        SET is_resolved = true, resolved_at = #{resolvedAt}
+        WHERE id IN
+        <foreach collection="alertIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 更新告警描述 -->
+    <update id="updateAlertDescription">
+        UPDATE anomaly_alerts SET description = #{description} WHERE id = #{id}
+    </update>
+
+    <!-- 更新告警严重程度 -->
+    <update id="updateAlertSeverity">
+        UPDATE anomaly_alerts SET anomaly_severity = #{severity} WHERE id = #{id}
+    </update>
+
+    <!-- 删除旧告警 -->
+    <delete id="cleanupOldAlerts">
+        DELETE FROM anomaly_alerts WHERE created_at &lt; #{cutoffDate}
+    </delete>
+
+    <!-- 动态查询告警 -->
+    <select id="findAlerts" resultMap="AnomalyAlertResultMap">
+        SELECT * FROM anomaly_alerts
+        <include refid="whereConditions"/>
+        ORDER BY created_at DESC
+        <if test="limit != null and limit &gt; 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 查找最近的告警 -->
+    <select id="findRecentAlerts" resultMap="AnomalyAlertResultMap">
+        SELECT * FROM anomaly_alerts
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查找异常值超过阈值最多的告警 -->
+    <select id="findHighestDeviationAlerts" resultMap="AnomalyAlertResultMap">
+        SELECT * FROM anomaly_alerts
+        WHERE anomaly_value &gt; threshold_value
+        ORDER BY (anomaly_value - threshold_value) DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 动态统计告警数量 -->
+    <select id="countAlerts" resultType="int">
+        SELECT COUNT(*) FROM anomaly_alerts
+        <include refid="whereConditions"/>
+    </select>
+
+    <!-- 获取告警统计分析 -->
+    <select id="getAlertStats" resultType="map">
+        SELECT
+        <choose>
+            <when test="groupBy == 'type_severity'">
+                anomaly_type, anomaly_severity, COUNT(*) as count
+            </when>
+            <when test="groupBy == 'type'">
+                anomaly_type, COUNT(*) as count
+            </when>
+            <when test="groupBy == 'severity'">
+                anomaly_severity, COUNT(*) as count
+            </when>
+            <when test="groupBy == 'city'">
+                city, COUNT(*) as count
+            </when>
+            <otherwise>
+                anomaly_type, anomaly_severity, COUNT(*) as count
+            </otherwise>
+        </choose>
+        FROM anomaly_alerts
+        <where>
+            <if test="startDate != null">
+                AND analysis_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND analysis_date &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY
+        <choose>
+            <when test="groupBy == 'type_severity'">
+                anomaly_type, anomaly_severity
+            </when>
+            <when test="groupBy == 'type'">
+                anomaly_type
+            </when>
+            <when test="groupBy == 'severity'">
+                anomaly_severity
+            </when>
+            <when test="groupBy == 'city'">
+                city
+            </when>
+            <otherwise>
+                anomaly_type, anomaly_severity
+            </otherwise>
+        </choose>
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取城市告警趋势 -->
+    <select id="getCityAlertTrend" resultType="map">
+        SELECT analysis_date, anomaly_severity, COUNT(*) as count
+        FROM anomaly_alerts
+        WHERE city = #{city}
+          AND analysis_date &gt;= #{startDate}
+          AND analysis_date &lt;= #{endDate}
+        GROUP BY analysis_date, anomaly_severity
+        ORDER BY analysis_date DESC
+    </select>
+
+    <!-- 获取小时级告警分布 -->
+    <select id="getHourlyAlertDistribution" resultType="map">
+        SELECT analysis_hour, anomaly_type, COUNT(*) as count
+        FROM anomaly_alerts
+        WHERE city = #{city} AND analysis_date = #{date}
+        GROUP BY analysis_hour, anomaly_type
+        ORDER BY analysis_hour
+    </select>
+
+    <!-- 获取配送员告警排行 -->
+    <select id="getCourierAlertRanking" resultType="map">
+        SELECT
+            courier_id,
+            COUNT(*) as alert_count,
+            SUM(CASE WHEN anomaly_severity = 'HIGH' THEN 1 ELSE 0 END) as high_risk_count
+        FROM anomaly_alerts
+        WHERE city = #{city} AND analysis_date &gt;= #{startDate}
+        GROUP BY courier_id
+        ORDER BY alert_count DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
