@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.service.dao.mapper.PredictiveAnalysisDataMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="PredictiveAnalysisDataResultMap" type="com.logistics.service.dao.entity.PredictiveAnalysisData">
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="ds_date" property="dsDate" jdbcType="DATE"/>
+        <result column="hour" property="hour" jdbcType="INTEGER"/>
+        <result column="order_volume" property="orderVolume" jdbcType="BIGINT"/>
+        <result column="courier_count" property="courierCount" jdbcType="BIGINT"/>
+        <result column="avg_duration" property="avgDuration" jdbcType="DOUBLE"/>
+        <result column="total_distance" property="totalDistance" jdbcType="DOUBLE"/>
+        <result column="volume_trend" property="volumeTrend" jdbcType="BIGINT"/>
+        <result column="efficiency_score" property="efficiencyScore" jdbcType="DOUBLE"/>
+        <result column="data_type" property="dataType" jdbcType="VARCHAR"/>
+        <result column="region_id" property="regionId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础列定义 -->
+    <sql id="Base_Column_List">
+        city, ds_date, hour, order_volume, courier_count, avg_duration,
+        total_distance, volume_trend, efficiency_score, data_type, region_id
+    </sql>
+
+    <!-- 插入预测分析数据 -->
+    <insert id="insertPredictiveAnalysis" parameterType="com.logistics.service.dao.entity.PredictiveAnalysisData">
+        INSERT INTO predictive_analysis_data
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="city != null">city,</if>
+            <if test="dsDate != null">ds_date,</if>
+            <if test="hour != null">hour,</if>
+            <if test="orderVolume != null">order_volume,</if>
+            <if test="courierCount != null">courier_count,</if>
+            <if test="avgDuration != null">avg_duration,</if>
+            <if test="totalDistance != null">total_distance,</if>
+            <if test="volumeTrend != null">volume_trend,</if>
+            <if test="efficiencyScore != null">efficiency_score,</if>
+            <if test="dataType != null">data_type,</if>
+            <if test="regionId != null">region_id,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="city != null">#{city,jdbcType=VARCHAR},</if>
+            <if test="dsDate != null">#{dsDate,jdbcType=DATE},</if>
+            <if test="hour != null">#{hour,jdbcType=INTEGER},</if>
+            <if test="orderVolume != null">#{orderVolume,jdbcType=BIGINT},</if>
+            <if test="courierCount != null">#{courierCount,jdbcType=BIGINT},</if>
+            <if test="avgDuration != null">#{avgDuration,jdbcType=DOUBLE},</if>
+            <if test="totalDistance != null">#{totalDistance,jdbcType=DOUBLE},</if>
+            <if test="volumeTrend != null">#{volumeTrend,jdbcType=BIGINT},</if>
+            <if test="efficiencyScore != null">#{efficiencyScore,jdbcType=DOUBLE},</if>
+            <if test="dataType != null">#{dataType,jdbcType=VARCHAR},</if>
+            <if test="regionId != null">#{regionId,jdbcType=VARCHAR},</if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入预测分析数据 -->
+    <insert id="batchInsertPredictiveAnalysis" parameterType="java.util.List">
+        INSERT INTO predictive_analysis_data (
+        city, ds_date, hour, order_volume, courier_count, avg_duration,
+        total_distance, volume_trend, efficiency_score, data_type, region_id
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.city,jdbcType=VARCHAR},
+            #{item.dsDate,jdbcType=DATE},
+            #{item.hour,jdbcType=INTEGER},
+            #{item.orderVolume,jdbcType=BIGINT},
+            #{item.courierCount,jdbcType=BIGINT},
+            #{item.avgDuration,jdbcType=DOUBLE},
+            #{item.totalDistance,jdbcType=DOUBLE},
+            #{item.volumeTrend,jdbcType=BIGINT},
+            #{item.efficiencyScore,jdbcType=DOUBLE},
+            #{item.dataType,jdbcType=VARCHAR},
+            #{item.regionId,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据城市、类型和日期范围查找预测分析 -->
+    <select id="findByCityAndTypeAndDateRange" resultMap="PredictiveAnalysisDataResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="dataType != null and dataType != ''">
+            AND data_type = #{dataType,jdbcType=VARCHAR}
+        </if>
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND ds_date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        ORDER BY ds_date DESC, hour ASC
+    </select>
+
+    <!-- 根据城市和日期查找预测数据 -->
+    <select id="findByCityAndDate" resultMap="PredictiveAnalysisDataResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND ds_date = #{date,jdbcType=DATE}
+        ORDER BY hour ASC
+    </select>
+
+    <!-- 多条件查询预测数据 -->
+    <select id="findByConditions" resultMap="PredictiveAnalysisDataResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM predictive_analysis_data
+        <where>
+            <if test="city != null and city != ''">
+                AND city = #{city,jdbcType=VARCHAR}
+            </if>
+            <if test="regionId != null and regionId != ''">
+                AND region_id = #{regionId,jdbcType=VARCHAR}
+            </if>
+            <if test="dataType != null and dataType != ''">
+                AND data_type = #{dataType,jdbcType=VARCHAR}
+            </if>
+            <if test="startDate != null">
+                AND ds_date >= #{startDate,jdbcType=DATE}
+            </if>
+            <if test="endDate != null">
+                AND ds_date &lt;= #{endDate,jdbcType=DATE}
+            </if>
+        </where>
+        ORDER BY ds_date DESC, hour ASC
+    </select>
+
+    <!-- 获取订单量趋势 -->
+    <select id="getOrderVolumeTrend" resultType="java.util.Map">
+        SELECT
+        ds_date,
+        SUM(order_volume) as total_order_volume,
+        AVG(order_volume) as avg_order_volume,
+        AVG(volume_trend) as avg_volume_trend,
+        AVG(efficiency_score) as avg_efficiency_score,
+        COUNT(*) as record_count
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="dataType != null and dataType != ''">
+            AND data_type = #{dataType,jdbcType=VARCHAR}
+        </if>
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY ds_date
+        ORDER BY ds_date ASC
+    </select>
+
+    <!-- 获取小时分布分析 -->
+    <select id="getHourlyDistribution" resultType="java.util.Map">
+        SELECT
+        hour,
+        AVG(order_volume) as avg_order_volume,
+        AVG(courier_count) as avg_courier_count,
+        AVG(efficiency_score) as avg_efficiency_score,
+        COUNT(*) as record_count
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY hour
+        ORDER BY hour ASC
+    </select>
+
+    <!-- 获取效率预测趋势 -->
+    <select id="getEfficiencyTrend" resultType="java.util.Map">
+        SELECT
+        ds_date,
+        AVG(efficiency_score) as avg_efficiency_score,
+        MAX(efficiency_score) as max_efficiency_score,
+        MIN(efficiency_score) as min_efficiency_score,
+        COUNT(*) as record_count
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND efficiency_score IS NOT NULL
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY ds_date
+        ORDER BY ds_date ASC
+    </select>
+
+    <!-- 获取容量分析统计 -->
+    <select id="getCapacityAnalysis" resultType="java.util.Map">
+        SELECT
+        ds_date,
+        AVG(order_volume) as avg_order_volume,
+        AVG(courier_count) as avg_courier_count,
+        CASE
+        WHEN AVG(courier_count) > 0 THEN AVG(order_volume) / AVG(courier_count)
+        ELSE 0
+        END as orders_per_courier,
+        AVG(total_distance) as avg_total_distance
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY ds_date
+        ORDER BY ds_date ASC
+    </select>
+
+    <!-- 获取数据类型统计 -->
+    <select id="getDataTypeStats" resultType="java.util.Map">
+        SELECT
+        data_type,
+        COUNT(*) as count,
+        AVG(order_volume) as avg_order_volume,
+        AVG(efficiency_score) as avg_efficiency_score,
+        MIN(ds_date) as earliest_date,
+        MAX(ds_date) as latest_date
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY data_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取预测汇总统计 -->
+    <select id="getPredictiveSummary" resultType="java.util.Map">
+        SELECT
+        COUNT(*) as total_records,
+        AVG(order_volume) as avg_order_volume,
+        MAX(order_volume) as max_order_volume,
+        MIN(order_volume) as min_order_volume,
+        AVG(courier_count) as avg_courier_count,
+        AVG(efficiency_score) as avg_efficiency_score,
+        AVG(total_distance) as avg_total_distance,
+        COUNT(DISTINCT data_type) as data_type_count,
+        COUNT(DISTINCT region_id) as region_count,
+        MIN(ds_date) as earliest_date,
+        MAX(ds_date) as latest_date
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+    </select>
+
+    <!-- 获取最新预测数据 -->
+    <select id="findLatestPredictions" resultMap="PredictiveAnalysisDataResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="dataType != null and dataType != ''">
+            AND data_type = #{dataType,jdbcType=VARCHAR}
+        </if>
+        ORDER BY ds_date DESC, hour ASC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 更新预测分析数据 -->
+    <update id="updatePredictiveAnalysis" parameterType="com.logistics.service.dao.entity.PredictiveAnalysisData">
+        UPDATE predictive_analysis_data
+        <set>
+            <if test="orderVolume != null">order_volume = #{orderVolume,jdbcType=BIGINT},</if>
+            <if test="courierCount != null">courier_count = #{courierCount,jdbcType=BIGINT},</if>
+            <if test="avgDuration != null">avg_duration = #{avgDuration,jdbcType=DOUBLE},</if>
+            <if test="totalDistance != null">total_distance = #{totalDistance,jdbcType=DOUBLE},</if>
+            <if test="volumeTrend != null">volume_trend = #{volumeTrend,jdbcType=BIGINT},</if>
+            <if test="efficiencyScore != null">efficiency_score = #{efficiencyScore,jdbcType=DOUBLE},</if>
+        </set>
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND ds_date = #{dsDate,jdbcType=DATE}
+        <if test="hour != null">
+            AND hour = #{hour,jdbcType=INTEGER}
+        </if>
+        <if test="dataType != null">
+            AND data_type = #{dataType,jdbcType=VARCHAR}
+        </if>
+    </update>
+
+    <!-- 删除旧的预测分析数据 -->
+    <delete id="cleanupOldPredictions">
+        DELETE FROM predictive_analysis_data
+        WHERE ds_date &lt; #{cutoffDate,jdbcType=DATE}
+    </delete>
+
+    <!-- 统计预测分析记录数 -->
+    <select id="countByCityAndType" resultType="int">
+        SELECT COUNT(*)
+        FROM predictive_analysis_data
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="dataType != null and dataType != ''">
+            AND data_type = #{dataType,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- 获取城市间预测对比 -->
+    <select id="getCityPredictiveComparison" resultType="java.util.Map">
+        SELECT
+        city,
+        AVG(order_volume) as avg_order_volume,
+        AVG(courier_count) as avg_courier_count,
+        AVG(efficiency_score) as avg_efficiency_score,
+        AVG(total_distance) as avg_total_distance,
+        COUNT(*) as record_count
+        FROM predictive_analysis_data
+        WHERE city IN
+        <foreach collection="cities" item="city" open="(" separator="," close=")">
+            #{city,jdbcType=VARCHAR}
+        </foreach>
+        <if test="dataType != null and dataType != ''">
+            AND data_type = #{dataType,jdbcType=VARCHAR}
+        </if>
+        <if test="startDate != null">
+            AND ds_date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND ds_date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        GROUP BY city
+        ORDER BY avg_order_volume DESC
+    </select>
+
+</mapper>

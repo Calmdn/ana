@@ -7,84 +7,88 @@ import java.time.LocalDate;
 @Data
 public class TimeEfficiencyDTO {
     private String city;
-    private LocalDate analysisDate;
-    private Integer analysisHour;
-    private Integer totalDeliveries;
+    private LocalDate date;  // 对应数据库的date字段
+    private Long totalDeliveries;
     private BigDecimal avgDeliveryTime;
-    private BigDecimal medianDeliveryTime;
-    private BigDecimal p95DeliveryTime;
-    private Integer fastDeliveries;
-    private Integer normalDeliveries;
-    private Integer slowDeliveries;
+    private Long fastDeliveries;
+    private Long slowDeliveries;
     private BigDecimal fastDeliveryRate;
     private BigDecimal slowDeliveryRate;
-    private Integer totalPickups;
-    private BigDecimal avgPickupTime;
-    private BigDecimal medianPickupTime;
-    private BigDecimal p95PickupTime;
-    private Integer fastPickups;
-    private Integer normalPickups;
-    private Integer slowPickups;
-    private BigDecimal fastPickupRate;
-    private BigDecimal slowPickupRate;
-    private Integer onTimePickups;
-    private BigDecimal onTimePickupRate;
 
     // 计算属性
-    public Integer getTotalOrders() {
-        int deliveries = totalDeliveries != null ? totalDeliveries : 0;
-        int pickups = totalPickups != null ? totalPickups : 0;
-        return deliveries + pickups;
+    public Long getNormalDeliveries() {
+        if (totalDeliveries != null && fastDeliveries != null && slowDeliveries != null) {
+            return totalDeliveries - fastDeliveries - slowDeliveries;
+        }
+        return 0L;
     }
 
-    public BigDecimal getOverallEfficiencyScore() {
-        if (fastDeliveryRate != null && onTimePickupRate != null) {
-            return fastDeliveryRate.add(onTimePickupRate).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_HALF_UP);
+    public BigDecimal getNormalDeliveryRate() {
+        if (totalDeliveries != null && totalDeliveries > 0) {
+            long normal = getNormalDeliveries();
+            return BigDecimal.valueOf(normal)
+                    .divide(BigDecimal.valueOf(totalDeliveries), 4, BigDecimal.ROUND_HALF_UP);
         }
-        if (fastDeliveryRate != null) return fastDeliveryRate;
-        if (onTimePickupRate != null) return onTimePickupRate;
         return BigDecimal.ZERO;
     }
 
     public String getDeliveryPerformanceLevel() {
         if (fastDeliveryRate != null) {
-            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.9)) >= 0) return "优秀";
-            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.8)) >= 0) return "良好";
-            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.7)) >= 0) return "一般";
-            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.6)) >= 0) return "偏低";
+            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.8)) >= 0) return "优秀";
+            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.6)) >= 0) return "良好";
+            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.4)) >= 0) return "一般";
+            if (fastDeliveryRate.compareTo(BigDecimal.valueOf(0.2)) >= 0) return "偏低";
             return "需改进";
         }
         return "未评估";
     }
 
-    public String getPickupPerformanceLevel() {
-        if (onTimePickupRate != null) {
-            if (onTimePickupRate.compareTo(BigDecimal.valueOf(0.95)) >= 0) return "优秀";
-            if (onTimePickupRate.compareTo(BigDecimal.valueOf(0.85)) >= 0) return "良好";
-            if (onTimePickupRate.compareTo(BigDecimal.valueOf(0.75)) >= 0) return "一般";
-            if (onTimePickupRate.compareTo(BigDecimal.valueOf(0.65)) >= 0) return "偏低";
+    public String getEfficiencyLevel() {
+        if (slowDeliveryRate != null) {
+            if (slowDeliveryRate.compareTo(BigDecimal.valueOf(0.1)) <= 0) return "高效";
+            if (slowDeliveryRate.compareTo(BigDecimal.valueOf(0.2)) <= 0) return "良好";
+            if (slowDeliveryRate.compareTo(BigDecimal.valueOf(0.3)) <= 0) return "一般";
             return "需改进";
         }
-        return "未评估";
+        return "未知";
     }
 
-    public String getTimeSlotDescription() {
-        if (analysisHour != null) {
-            if (analysisHour >= 6 && analysisHour < 9) return "早高峰";
-            if (analysisHour >= 9 && analysisHour < 12) return "上午时段";
-            if (analysisHour >= 12 && analysisHour < 14) return "午餐时段";
-            if (analysisHour >= 14 && analysisHour < 17) return "下午时段";
-            if (analysisHour >= 17 && analysisHour < 20) return "晚高峰";
-            if (analysisHour >= 20 && analysisHour < 23) return "夜间时段";
-            return "深夜时段";
+    public String getTimePerformanceDescription() {
+        if (avgDeliveryTime != null) {
+            if (avgDeliveryTime.compareTo(BigDecimal.valueOf(30)) <= 0) return "极快";
+            if (avgDeliveryTime.compareTo(BigDecimal.valueOf(45)) <= 0) return "快速";
+            if (avgDeliveryTime.compareTo(BigDecimal.valueOf(60)) <= 0) return "正常";
+            if (avgDeliveryTime.compareTo(BigDecimal.valueOf(90)) <= 0) return "较慢";
+            return "慢";
         }
-        return "全天";
+        return "未知";
     }
 
-    public BigDecimal getDeliveryVariability() {
-        if (p95DeliveryTime != null && medianDeliveryTime != null && medianDeliveryTime.compareTo(BigDecimal.ZERO) > 0) {
-            return p95DeliveryTime.divide(medianDeliveryTime, 2, BigDecimal.ROUND_HALF_UP);
+    public BigDecimal getOverallEfficiencyScore() {
+        if (fastDeliveryRate != null && slowDeliveryRate != null) {
+            // 快速配送率占60%，慢速配送率（倒数）占40%
+            BigDecimal fastScore = fastDeliveryRate.multiply(BigDecimal.valueOf(0.6));
+            BigDecimal slowScore = BigDecimal.ONE.subtract(slowDeliveryRate).multiply(BigDecimal.valueOf(0.4));
+            return fastScore.add(slowScore).multiply(BigDecimal.valueOf(100));
         }
         return BigDecimal.ZERO;
+    }
+
+    public String getWorkloadLevel() {
+        if (totalDeliveries != null) {
+            if (totalDeliveries >= 1000) return "超高负荷";
+            if (totalDeliveries >= 500) return "高负荷";
+            if (totalDeliveries >= 200) return "中等负荷";
+            if (totalDeliveries >= 50) return "轻负荷";
+            return "空闲";
+        }
+        return "未知";
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TimeEfficiencyDTO{city='%s', date=%s, totalDeliveries=%d, " +
+                        "avgDeliveryTime=%s, fastDeliveryRate=%s, slowDeliveryRate=%s}",
+                city, date, totalDeliveries, avgDeliveryTime, fastDeliveryRate, slowDeliveryRate);
     }
 }

@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.service.dao.mapper.SpatialAnalysisMetricsMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="SpatialAnalysisMetricsResultMap" type="com.logistics.service.dao.entity.SpatialAnalysisMetrics">
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+        <result column="lng_grid" property="lngGrid" jdbcType="DOUBLE"/>
+        <result column="lat_grid" property="latGrid" jdbcType="DOUBLE"/>
+        <result column="delivery_count" property="deliveryCount" jdbcType="BIGINT"/>
+        <result column="unique_couriers" property="uniqueCouriers" jdbcType="BIGINT"/>
+        <result column="avg_delivery_time" property="avgDeliveryTime" jdbcType="DOUBLE"/>
+        <result column="avg_delivery_distance" property="avgDeliveryDistance" jdbcType="DOUBLE"/>
+        <result column="delivery_density" property="deliveryDensity" jdbcType="DOUBLE"/>
+    </resultMap>
+
+    <!-- 基础列定义 -->
+    <sql id="Base_Column_List">
+        city, date, lng_grid, lat_grid, delivery_count, unique_couriers,
+        avg_delivery_time, avg_delivery_distance, delivery_density
+    </sql>
+
+    <!-- 插入空间分析数据 -->
+    <insert id="insertSpatialAnalysis" parameterType="com.logistics.service.dao.entity.SpatialAnalysisMetrics">
+        INSERT INTO spatial_analysis_metrics
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="city != null">city,</if>
+            <if test="date != null">date,</if>
+            <if test="lngGrid != null">lng_grid,</if>
+            <if test="latGrid != null">lat_grid,</if>
+            <if test="deliveryCount != null">delivery_count,</if>
+            <if test="uniqueCouriers != null">unique_couriers,</if>
+            <if test="avgDeliveryTime != null">avg_delivery_time,</if>
+            <if test="avgDeliveryDistance != null">avg_delivery_distance,</if>
+            <if test="deliveryDensity != null">delivery_density,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="city != null">#{city,jdbcType=VARCHAR},</if>
+            <if test="date != null">#{date,jdbcType=DATE},</if>
+            <if test="lngGrid != null">#{lngGrid,jdbcType=DOUBLE},</if>
+            <if test="latGrid != null">#{latGrid,jdbcType=DOUBLE},</if>
+            <if test="deliveryCount != null">#{deliveryCount,jdbcType=BIGINT},</if>
+            <if test="uniqueCouriers != null">#{uniqueCouriers,jdbcType=BIGINT},</if>
+            <if test="avgDeliveryTime != null">#{avgDeliveryTime,jdbcType=DOUBLE},</if>
+            <if test="avgDeliveryDistance != null">#{avgDeliveryDistance,jdbcType=DOUBLE},</if>
+            <if test="deliveryDensity != null">#{deliveryDensity,jdbcType=DOUBLE},</if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入空间分析数据 -->
+    <insert id="batchInsertSpatialAnalysis" parameterType="java.util.List">
+        INSERT INTO spatial_analysis_metrics (
+        city, date, lng_grid, lat_grid, delivery_count, unique_couriers,
+        avg_delivery_time, avg_delivery_distance, delivery_density
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.city,jdbcType=VARCHAR},
+            #{item.date,jdbcType=DATE},
+            #{item.lngGrid,jdbcType=DOUBLE},
+            #{item.latGrid,jdbcType=DOUBLE},
+            #{item.deliveryCount,jdbcType=BIGINT},
+            #{item.uniqueCouriers,jdbcType=BIGINT},
+            #{item.avgDeliveryTime,jdbcType=DOUBLE},
+            #{item.avgDeliveryDistance,jdbcType=DOUBLE},
+            #{item.deliveryDensity,jdbcType=DOUBLE}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据城市和日期范围查找空间分析 -->
+    <select id="findByCityAndDateRange" resultMap="SpatialAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        ORDER BY date DESC, delivery_density DESC
+    </select>
+
+    <!-- 根据城市和日期查找空间分析 -->
+    <select id="findByCityAndDate" resultMap="SpatialAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND date = #{date,jdbcType=DATE}
+        ORDER BY delivery_density DESC, delivery_count DESC
+    </select>
+
+    <!-- 根据地理范围查找 -->
+    <select id="findByGeoRange" resultMap="SpatialAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND lng_grid >= #{minLng,jdbcType=DOUBLE} AND lng_grid &lt;= #{maxLng,jdbcType=DOUBLE}
+        AND lat_grid >= #{minLat,jdbcType=DOUBLE} AND lat_grid &lt;= #{maxLat,jdbcType=DOUBLE}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        ORDER BY delivery_density DESC
+    </select>
+
+    <!-- 获取配送密度热点 -->
+    <select id="getDeliveryDensityHotspots" resultType="java.util.Map">
+        SELECT
+        lng_grid,
+        lat_grid,
+        AVG(delivery_density) as avg_density,
+        SUM(delivery_count) as total_deliveries,
+        AVG(unique_couriers) as avg_couriers,
+        COUNT(*) as record_count
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY lng_grid, lat_grid
+        HAVING avg_density > 0
+        ORDER BY avg_density DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取配送时间热图数据 -->
+    <select id="getDeliveryTimeHeatmap" resultType="java.util.Map">
+        SELECT
+        lng_grid,
+        lat_grid,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        AVG(avg_delivery_distance) as avg_delivery_distance,
+        COUNT(*) as grid_count
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND avg_delivery_time IS NOT NULL
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY lng_grid, lat_grid
+        ORDER BY avg_delivery_time ASC
+    </select>
+
+    <!-- 获取空间分布统计 -->
+    <select id="getSpatialDistributionStats" resultType="java.util.Map">
+        SELECT
+        CASE
+        WHEN delivery_density >= 10 THEN 'high_density'
+        WHEN delivery_density >= 5 THEN 'medium_density'
+        WHEN delivery_density >= 1 THEN 'low_density'
+        ELSE 'very_low_density'
+        END as density_level,
+        COUNT(*) as grid_count,
+        AVG(delivery_count) as avg_delivery_count,
+        AVG(unique_couriers) as avg_couriers,
+        AVG(avg_delivery_time) as avg_delivery_time
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY density_level
+        ORDER BY AVG(delivery_density) DESC
+    </select>
+
+    <!-- 获取网格聚合数据 -->
+    <select id="getGridAggregation" resultType="java.util.Map">
+        SELECT
+            ROUND(lng_grid / #{gridSize,jdbcType=DOUBLE}) * #{gridSize,jdbcType=DOUBLE} as agg_lng,
+            ROUND(lat_grid / #{gridSize,jdbcType=DOUBLE}) * #{gridSize,jdbcType=DOUBLE} as agg_lat,
+            COUNT(*) as grid_count,
+            SUM(delivery_count) as total_deliveries,
+            SUM(unique_couriers) as total_couriers,
+            AVG(delivery_density) as avg_density
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+          AND date = #{date,jdbcType=DATE}
+        GROUP BY agg_lng, agg_lat
+        HAVING total_deliveries > 0
+        ORDER BY total_deliveries DESC
+    </select>
+
+    <!-- 获取空间汇总统计 -->
+    <select id="getSpatialSummary" resultType="java.util.Map">
+        SELECT
+        COUNT(*) as total_grids,
+        SUM(delivery_count) as total_deliveries,
+        SUM(unique_couriers) as total_couriers,
+        AVG(delivery_density) as avg_density,
+        MAX(delivery_density) as max_density,
+        MIN(delivery_density) as min_density,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        AVG(avg_delivery_distance) as avg_delivery_distance,
+        COUNT(DISTINCT date) as date_count,
+        MIN(date) as earliest_date,
+        MAX(date) as latest_date
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+    </select>
+
+    <!-- 查找热点区域 -->
+    <select id="findHotspotsByCity" resultMap="SpatialAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND date = #{date,jdbcType=DATE}
+        AND delivery_count > 0
+        ORDER BY delivery_count DESC, delivery_density DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 查找密度分析数据 -->
+    <select id="findDensityAnalysisByCity" resultMap="SpatialAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND date = #{date,jdbcType=DATE}
+        AND delivery_density > 0
+        ORDER BY delivery_density DESC
+    </select>
+
+    <!-- 获取配送员空间分布 -->
+    <select id="getCourierSpatialDistribution" resultType="java.util.Map">
+        SELECT
+        lng_grid,
+        lat_grid,
+        SUM(unique_couriers) as total_couriers,
+        AVG(delivery_count / NULLIF(unique_couriers, 0)) as avg_orders_per_courier,
+        SUM(delivery_count) as total_deliveries
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND unique_couriers > 0
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY lng_grid, lat_grid
+        ORDER BY total_couriers DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 更新空间分析数据 -->
+    <update id="updateSpatialAnalysis" parameterType="com.logistics.service.dao.entity.SpatialAnalysisMetrics">
+        UPDATE spatial_analysis_metrics
+        <set>
+            <if test="deliveryCount != null">delivery_count = #{deliveryCount,jdbcType=BIGINT},</if>
+            <if test="uniqueCouriers != null">unique_couriers = #{uniqueCouriers,jdbcType=BIGINT},</if>
+            <if test="avgDeliveryTime != null">avg_delivery_time = #{avgDeliveryTime,jdbcType=DOUBLE},</if>
+            <if test="avgDeliveryDistance != null">avg_delivery_distance = #{avgDeliveryDistance,jdbcType=DOUBLE},</if>
+            <if test="deliveryDensity != null">delivery_density = #{deliveryDensity,jdbcType=DOUBLE},</if>
+        </set>
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND date = #{date,jdbcType=DATE}
+        AND lng_grid = #{lngGrid,jdbcType=DOUBLE}
+        AND lat_grid = #{latGrid,jdbcType=DOUBLE}
+    </update>
+
+    <!-- 删除旧的空间分析数据 -->
+    <delete id="cleanupOldSpatialData">
+        DELETE FROM spatial_analysis_metrics
+        WHERE date &lt; #{cutoffDate,jdbcType=DATE}
+    </delete>
+
+    <!-- 统计空间分析记录数 -->
+    <select id="countByCity" resultType="int">
+        SELECT COUNT(*)
+        FROM spatial_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 获取城市间空间对比 -->
+    <select id="getCitySpatialComparison" resultType="java.util.Map">
+        SELECT
+        city,
+        COUNT(*) as total_grids,
+        SUM(delivery_count) as total_deliveries,
+        SUM(unique_couriers) as total_couriers,
+        AVG(delivery_density) as avg_density,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        AVG(avg_delivery_distance) as avg_delivery_distance
+        FROM spatial_analysis_metrics
+        WHERE city IN
+        <foreach collection="cities" item="city" open="(" separator="," close=")">
+            #{city,jdbcType=VARCHAR}
+        </foreach>
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        GROUP BY city
+        ORDER BY avg_density DESC
+    </select>
+
+</mapper>

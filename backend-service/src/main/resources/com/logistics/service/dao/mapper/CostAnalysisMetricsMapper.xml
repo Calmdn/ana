@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.service.dao.mapper.CostAnalysisMetricsMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="CostAnalysisMetricsResultMap" type="com.logistics.service.dao.entity.CostAnalysisMetrics">
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="region_id" property="regionId" jdbcType="INTEGER"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+        <result column="total_cost" property="totalCost" jdbcType="DOUBLE"/>
+        <result column="total_fuel_cost" property="totalFuelCost" jdbcType="DOUBLE"/>
+        <result column="total_time_cost" property="totalTimeCost" jdbcType="DOUBLE"/>
+        <result column="total_orders" property="totalOrders" jdbcType="BIGINT"/>
+        <result column="total_distance" property="totalDistance" jdbcType="DOUBLE"/>
+        <result column="cost_per_order" property="costPerOrder" jdbcType="DOUBLE"/>
+        <result column="cost_per_km" property="costPerKm" jdbcType="DOUBLE"/>
+        <result column="fuel_cost_ratio" property="fuelCostRatio" jdbcType="DOUBLE"/>
+        <result column="analysis_type" property="analysisType" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础列定义 -->
+<!--    <sql id="Base_Column_List">city,region_id,date,total_cost,total_fuel_cost,total_time_cost,total_orders,total_distance,cost_per_order,cost_per_km,fuel_cost_ratio,analysis_type</sql>-->
+    <!-- 基础列定义 -->
+    <sql id="Base_Column_List">
+        city,
+    region_id,
+    date,
+    total_cost,
+    total_fuel_cost,
+    total_time_cost,
+    total_orders,
+    total_distance,
+    cost_per_order,
+    cost_per_km,
+    fuel_cost_ratio,
+    analysis_type
+    </sql>
+    <!-- 插入成本分析数据 -->
+    <insert id="insertCostAnalysis" parameterType="com.logistics.service.dao.entity.CostAnalysisMetrics">
+        INSERT INTO cost_analysis_metrics
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="city != null">city,</if>
+            <if test="regionId != null">region_id,</if>
+            <if test="date != null">date,</if>
+            <if test="totalCost != null">total_cost,</if>
+            <if test="totalFuelCost != null">total_fuel_cost,</if>
+            <if test="totalTimeCost != null">total_time_cost,</if>
+            <if test="totalOrders != null">total_orders,</if>
+            <if test="totalDistance != null">total_distance,</if>
+            <if test="costPerOrder != null">cost_per_order,</if>
+            <if test="costPerKm != null">cost_per_km,</if>
+            <if test="fuelCostRatio != null">fuel_cost_ratio,</if>
+            <if test="analysisType != null">analysis_type,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="city != null">#{city,jdbcType=VARCHAR},</if>
+            <if test="regionId != null">#{regionId,jdbcType=INTEGER},</if>
+            <if test="date != null">#{date,jdbcType=DATE},</if>
+            <if test="totalCost != null">#{totalCost,jdbcType=DOUBLE},</if>
+            <if test="totalFuelCost != null">#{totalFuelCost,jdbcType=DOUBLE},</if>
+            <if test="totalTimeCost != null">#{totalTimeCost,jdbcType=DOUBLE},</if>
+            <if test="totalOrders != null">#{totalOrders,jdbcType=BIGINT},</if>
+            <if test="totalDistance != null">#{totalDistance,jdbcType=DOUBLE},</if>
+            <if test="costPerOrder != null">#{costPerOrder,jdbcType=DOUBLE},</if>
+            <if test="costPerKm != null">#{costPerKm,jdbcType=DOUBLE},</if>
+            <if test="fuelCostRatio != null">#{fuelCostRatio,jdbcType=DOUBLE},</if>
+            <if test="analysisType != null">#{analysisType,jdbcType=VARCHAR},</if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入成本分析数据 -->
+    <insert id="batchInsertCostAnalysis" parameterType="java.util.List">
+        INSERT INTO cost_analysis_metrics (
+        city, region_id, date, total_cost, total_fuel_cost, total_time_cost,
+        total_orders, total_distance, cost_per_order, cost_per_km,
+        fuel_cost_ratio, analysis_type
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.city,jdbcType=VARCHAR},
+            #{item.regionId,jdbcType=INTEGER},
+            #{item.date,jdbcType=DATE},
+            #{item.totalCost,jdbcType=DOUBLE},
+            #{item.totalFuelCost,jdbcType=DOUBLE},
+            #{item.totalTimeCost,jdbcType=DOUBLE},
+            #{item.totalOrders,jdbcType=BIGINT},
+            #{item.totalDistance,jdbcType=DOUBLE},
+            #{item.costPerOrder,jdbcType=DOUBLE},
+            #{item.costPerKm,jdbcType=DOUBLE},
+            #{item.fuelCostRatio,jdbcType=DOUBLE},
+            #{item.analysisType,jdbcType=VARCHAR}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据城市和日期范围查找成本分析 -->
+    <select id="findByCityAndDateRange" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        ORDER BY date DESC
+    </select>
+
+    <!-- 根据区域和日期范围查找成本分析 -->
+    <select id="findByRegionAndDateRange" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        WHERE region_id = #{regionId,jdbcType=INTEGER}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        ORDER BY date DESC
+    </select>
+
+    <!-- 根据分析类型查找成本分析 -->
+    <select id="findByAnalysisType" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        WHERE analysis_type = #{analysisType,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        ORDER BY date DESC
+    </select>
+
+    <!-- 多条件查询成本分析 -->
+    <select id="findByConditions" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        <where>
+            <if test="city != null and city != ''">
+                AND city = #{city,jdbcType=VARCHAR}
+            </if>
+            <if test="regionId != null">
+                AND region_id = #{regionId,jdbcType=INTEGER}
+            </if>
+            <if test="analysisType != null and analysisType != ''">
+                AND analysis_type = #{analysisType,jdbcType=VARCHAR}
+            </if>
+            <if test="startDate != null">
+                AND date >= #{startDate,jdbcType=DATE}
+            </if>
+            <if test="endDate != null">
+                AND date &lt;= #{endDate,jdbcType=DATE}
+            </if>
+        </where>
+        ORDER BY date DESC
+    </select>
+
+    <!-- 获取城市成本趋势 -->
+    <select id="getCityCostTrend" resultType="java.util.Map">
+        SELECT
+        date,
+        AVG(cost_per_order) as avg_cost_per_order,
+        AVG(cost_per_km) as avg_cost_per_km,
+        AVG(fuel_cost_ratio) as avg_fuel_cost_ratio,
+        SUM(total_orders) as total_orders,
+        COUNT(*) as record_count
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY date
+        ORDER BY date ASC
+    </select>
+
+    <!-- 获取区域成本排行 -->
+    <select id="getRegionCostRanking" resultType="java.util.Map">
+        SELECT
+        region_id,
+        city,
+        AVG(cost_per_order) as avg_cost_per_order,
+        AVG(cost_per_km) as avg_cost_per_km,
+        AVG(fuel_cost_ratio) as avg_fuel_cost_ratio,
+        SUM(total_orders) as total_orders,
+        AVG(total_distance) as avg_total_distance
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY region_id, city
+        ORDER BY avg_cost_per_order ASC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取分析类型统计 -->
+    <select id="getAnalysisTypeStats" resultType="java.util.Map">
+        SELECT
+        analysis_type,
+        COUNT(*) as count,
+        AVG(cost_per_order) as avg_cost_per_order,
+        AVG(cost_per_km) as avg_cost_per_km,
+        AVG(fuel_cost_ratio) as avg_fuel_cost_ratio,
+        SUM(total_orders) as total_orders
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY analysis_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取高成本告警 -->
+    <select id="findHighCostAlerts" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        WHERE cost_per_order > #{threshold,jdbcType=DOUBLE}
+        <if test="date != null">
+            AND date >= #{date,jdbcType=DATE}
+        </if>
+        ORDER BY cost_per_order DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取成本汇总统计 -->
+    <select id="getCostSummary" resultType="java.util.Map">
+        SELECT
+        COUNT(*) as total_records,
+        AVG(cost_per_order) as avg_cost_per_order,
+        AVG(cost_per_km) as avg_cost_per_km,
+        AVG(fuel_cost_ratio) as avg_fuel_cost_ratio,
+        SUM(total_orders) as total_orders,
+        SUM(total_distance) as total_distance,
+        SUM(total_cost) as total_cost,
+        SUM(total_fuel_cost) as total_fuel_cost,
+        SUM(total_time_cost) as total_time_cost,
+        MIN(cost_per_order) as min_cost_per_order,
+        MAX(cost_per_order) as max_cost_per_order,
+        MIN(date) as earliest_date,
+        MAX(date) as latest_date
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+    </select>
+
+    <!-- 更新成本分析数据 -->
+    <update id="updateCostAnalysis" parameterType="com.logistics.service.dao.entity.CostAnalysisMetrics">
+        UPDATE cost_analysis_metrics
+        <set>
+            <if test="totalCost != null">total_cost = #{totalCost,jdbcType=DOUBLE},</if>
+            <if test="totalFuelCost != null">total_fuel_cost = #{totalFuelCost,jdbcType=DOUBLE},</if>
+            <if test="totalTimeCost != null">total_time_cost = #{totalTimeCost,jdbcType=DOUBLE},</if>
+            <if test="totalOrders != null">total_orders = #{totalOrders,jdbcType=BIGINT},</if>
+            <if test="totalDistance != null">total_distance = #{totalDistance,jdbcType=DOUBLE},</if>
+            <if test="costPerOrder != null">cost_per_order = #{costPerOrder,jdbcType=DOUBLE},</if>
+            <if test="costPerKm != null">cost_per_km = #{costPerKm,jdbcType=DOUBLE},</if>
+            <if test="fuelCostRatio != null">fuel_cost_ratio = #{fuelCostRatio,jdbcType=DOUBLE},</if>
+        </set>
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND region_id = #{regionId,jdbcType=INTEGER}
+        AND date = #{date,jdbcType=DATE}
+        AND analysis_type = #{analysisType,jdbcType=VARCHAR}
+    </update>
+
+    <!-- 删除旧的成本分析数据 -->
+    <delete id="cleanupOldCostAnalysis">
+        DELETE FROM cost_analysis_metrics
+        WHERE date &lt; #{cutoffDate,jdbcType=DATE}
+    </delete>
+
+    <!-- 统计成本分析数量 -->
+    <select id="countByCity" resultType="int">
+        SELECT COUNT(*)
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 根据城市获取最新分析数据 -->
+    <select id="findLatestByCity" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        ORDER BY date DESC
+        LIMIT 1
+    </select>
+
+    <!-- 获取成本异常数据 -->
+    <select id="findAnomalyCostData" resultMap="CostAnalysisMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cost_analysis_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="costThreshold != null">
+            AND cost_per_order > #{costThreshold,jdbcType=DOUBLE}
+        </if>
+        <if test="fuelRatioThreshold != null">
+            AND fuel_cost_ratio > #{fuelRatioThreshold,jdbcType=DOUBLE}
+        </if>
+        ORDER BY cost_per_order DESC, fuel_cost_ratio DESC
+    </select>
+
+    <!-- 获取城市间成本对比 -->
+    <select id="getCityCostComparison" resultType="java.util.Map">
+        SELECT
+        city,
+        AVG(cost_per_order) as avg_cost_per_order,
+        AVG(cost_per_km) as avg_cost_per_km,
+        AVG(fuel_cost_ratio) as avg_fuel_cost_ratio,
+        SUM(total_orders) as total_orders,
+        SUM(total_distance) as total_distance,
+        SUM(total_cost) as total_cost,
+        COUNT(DISTINCT region_id) as region_count,
+        COUNT(*) as record_count
+        FROM cost_analysis_metrics
+        WHERE city IN
+        <foreach collection="cities" item="city" open="(" separator="," close=")">
+            #{city,jdbcType=VARCHAR}
+        </foreach>
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date &lt;= #{endDate,jdbcType=DATE}
+        </if>
+        GROUP BY city
+        ORDER BY avg_cost_per_order ASC
+    </select>
+
+</mapper>
+

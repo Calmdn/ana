@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.service.dao.mapper.TimeEfficiencyMetricsMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="TimeEfficiencyMetricsResultMap" type="com.logistics.service.dao.entity.TimeEfficiencyMetrics">
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="date" property="date" jdbcType="DATE"/>
+        <result column="total_deliveries" property="totalDeliveries" jdbcType="BIGINT"/>
+        <result column="avg_delivery_time" property="avgDeliveryTime" jdbcType="DOUBLE"/>
+        <result column="fast_deliveries" property="fastDeliveries" jdbcType="BIGINT"/>
+        <result column="slow_deliveries" property="slowDeliveries" jdbcType="BIGINT"/>
+        <result column="fast_delivery_rate" property="fastDeliveryRate" jdbcType="DOUBLE"/>
+        <result column="slow_delivery_rate" property="slowDeliveryRate" jdbcType="DOUBLE"/>
+    </resultMap>
+
+    <!-- 基础列定义 -->
+    <sql id="Base_Column_List">
+        city, date, total_deliveries, avg_delivery_time, fast_deliveries,
+        slow_deliveries, fast_delivery_rate, slow_delivery_rate
+    </sql>
+
+    <!-- 插入时间效率数据 -->
+    <insert id="insertTimeEfficiency" parameterType="com.logistics.service.dao.entity.TimeEfficiencyMetrics">
+        INSERT INTO time_efficiency_metrics
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="city != null">city,</if>
+            <if test="date != null">date,</if>
+            <if test="totalDeliveries != null">total_deliveries,</if>
+            <if test="avgDeliveryTime != null">avg_delivery_time,</if>
+            <if test="fastDeliveries != null">fast_deliveries,</if>
+            <if test="slowDeliveries != null">slow_deliveries,</if>
+            <if test="fastDeliveryRate != null">fast_delivery_rate,</if>
+            <if test="slowDeliveryRate != null">slow_delivery_rate,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="city != null">#{city,jdbcType=VARCHAR},</if>
+            <if test="date != null">#{date,jdbcType=DATE},</if>
+            <if test="totalDeliveries != null">#{totalDeliveries,jdbcType=BIGINT},</if>
+            <if test="avgDeliveryTime != null">#{avgDeliveryTime,jdbcType=DOUBLE},</if>
+            <if test="fastDeliveries != null">#{fastDeliveries,jdbcType=BIGINT},</if>
+            <if test="slowDeliveries != null">#{slowDeliveries,jdbcType=BIGINT},</if>
+            <if test="fastDeliveryRate != null">#{fastDeliveryRate,jdbcType=DOUBLE},</if>
+            <if test="slowDeliveryRate != null">#{slowDeliveryRate,jdbcType=DOUBLE},</if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入时间效率数据 -->
+    <insert id="batchInsertTimeEfficiency" parameterType="java.util.List">
+        INSERT INTO time_efficiency_metrics (
+        city, date, total_deliveries, avg_delivery_time, fast_deliveries,
+        slow_deliveries, fast_delivery_rate, slow_delivery_rate
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.city,jdbcType=VARCHAR},
+            #{item.date,jdbcType=DATE},
+            #{item.totalDeliveries,jdbcType=BIGINT},
+            #{item.avgDeliveryTime,jdbcType=DOUBLE},
+            #{item.fastDeliveries,jdbcType=BIGINT},
+            #{item.slowDeliveries,jdbcType=BIGINT},
+            #{item.fastDeliveryRate,jdbcType=DOUBLE},
+            #{item.slowDeliveryRate,jdbcType=DOUBLE}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据城市和日期范围查找时间效率 -->
+    <select id="findByCityAndDateRange" resultMap="TimeEfficiencyMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date <= #{endDate,jdbcType=DATE}
+        </if>
+        ORDER BY date DESC
+    </select>
+
+    <!-- 根据城市和日期查找时间效率 -->
+    <select id="findByCityAndDate" resultMap="TimeEfficiencyMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND date = #{date,jdbcType=DATE}
+        ORDER BY fast_delivery_rate DESC
+    </select>
+
+    <!-- 多条件查询时间效率 -->
+    <select id="findByConditions" resultMap="TimeEfficiencyMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM time_efficiency_metrics
+        <where>
+            <if test="city != null and city != ''">
+                AND city = #{city,jdbcType=VARCHAR}
+            </if>
+            <if test="startDate != null">
+                AND date >= #{startDate,jdbcType=DATE}
+            </if>
+            <if test="endDate != null">
+                AND date <= #{endDate,jdbcType=DATE}
+            </if>
+            <if test="minFastRate != null">
+                AND fast_delivery_rate >= #{minFastRate,jdbcType=DOUBLE}
+            </if>
+            <if test="maxSlowRate != null">
+                AND slow_delivery_rate <= #{maxSlowRate,jdbcType=DOUBLE}
+            </if>
+        </where>
+        ORDER BY date DESC, fast_delivery_rate DESC
+    </select>
+
+    <!-- 获取配送效率趋势 -->
+    <select id="getDeliveryEfficiencyTrend" resultType="java.util.Map">
+        SELECT
+        date,
+        AVG(fast_delivery_rate) as avg_fast_delivery_rate,
+        AVG(slow_delivery_rate) as avg_slow_delivery_rate,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        SUM(total_deliveries) as total_deliveries,
+        COUNT(*) as record_count
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY date
+        ORDER BY date ASC
+    </select>
+
+    <!-- 获取效率分布统计 -->
+    <select id="getEfficiencyDistribution" resultType="java.util.Map">
+        SELECT
+        CASE
+        WHEN fast_delivery_rate >= 0.8 THEN 'excellent'
+        WHEN fast_delivery_rate >= 0.6 THEN 'good'
+        WHEN fast_delivery_rate >= 0.4 THEN 'average'
+        WHEN fast_delivery_rate >= 0.2 THEN 'below_average'
+        ELSE 'poor'
+        END as efficiency_level,
+        COUNT(*) as count,
+        ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>), 2) as percentage,
+        AVG(fast_delivery_rate) as avg_fast_rate,
+        AVG(slow_delivery_rate) as avg_slow_rate
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY efficiency_level
+        ORDER BY avg_fast_rate DESC
+    </select>
+
+    <!-- 获取时间效率排行 -->
+    <select id="getTimeEfficiencyRanking" resultType="java.util.Map">
+        SELECT
+        city,
+        AVG(fast_delivery_rate) as avg_fast_rate,
+        AVG(slow_delivery_rate) as avg_slow_rate,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        SUM(total_deliveries) as total_deliveries,
+        COUNT(*) as record_count
+        FROM time_efficiency_metrics
+        WHERE city IN
+        <foreach collection="cities" item="city" open="(" separator="," close=")">
+            #{city,jdbcType=VARCHAR}
+        </foreach>
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        GROUP BY city
+        ORDER BY avg_fast_rate DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取慢配送分析 -->
+    <select id="findSlowDeliveryAnalysis" resultMap="TimeEfficiencyMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND slow_delivery_rate > #{threshold,jdbcType=DOUBLE}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        ORDER BY slow_delivery_rate DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取快速配送分析 -->
+    <select id="findFastDeliveryAnalysis" resultMap="TimeEfficiencyMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND fast_delivery_rate > #{threshold,jdbcType=DOUBLE}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        ORDER BY fast_delivery_rate DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取时间效率汇总统计 -->
+    <select id="getTimeEfficiencySummary" resultType="java.util.Map">
+        SELECT
+        COUNT(*) as total_records,
+        AVG(fast_delivery_rate) as avg_fast_rate,
+        MAX(fast_delivery_rate) as max_fast_rate,
+        MIN(fast_delivery_rate) as min_fast_rate,
+        AVG(slow_delivery_rate) as avg_slow_rate,
+        MAX(slow_delivery_rate) as max_slow_rate,
+        MIN(slow_delivery_rate) as min_slow_rate,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        SUM(total_deliveries) as total_deliveries,
+        SUM(fast_deliveries) as total_fast_deliveries,
+        SUM(slow_deliveries) as total_slow_deliveries,
+        MIN(date) as earliest_date,
+        MAX(date) as latest_date
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+    </select>
+
+    <!-- 获取最新时间效率数据 -->
+    <select id="findLatestByCity" resultMap="TimeEfficiencyMetricsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+        ORDER BY date DESC
+        LIMIT 1
+    </select>
+
+    <!-- 更新时间效率数据 -->
+    <update id="updateTimeEfficiency" parameterType="com.logistics.service.dao.entity.TimeEfficiencyMetrics">
+        UPDATE time_efficiency_metrics
+        <set>
+            <if test="totalDeliveries != null">total_deliveries = #{totalDeliveries,jdbcType=BIGINT},</if>
+            <if test="avgDeliveryTime != null">avg_delivery_time = #{avgDeliveryTime,jdbcType=DOUBLE},</if>
+            <if test="fastDeliveries != null">fast_deliveries = #{fastDeliveries,jdbcType=BIGINT},</if>
+            <if test="slowDeliveries != null">slow_deliveries = #{slowDeliveries,jdbcType=BIGINT},</if>
+            <if test="fastDeliveryRate != null">fast_delivery_rate = #{fastDeliveryRate,jdbcType=DOUBLE},</if>
+            <if test="slowDeliveryRate != null">slow_delivery_rate = #{slowDeliveryRate,jdbcType=DOUBLE},</if>
+        </set>
+        WHERE city = #{city,jdbcType=VARCHAR}
+        AND date = #{date,jdbcType=DATE}
+    </update>
+
+    <!-- 删除旧的时间效率数据 -->
+    <delete id="cleanupOldTimeEfficiency">
+        DELETE FROM time_efficiency_metrics
+        WHERE date &lt; #{cutoffDate,jdbcType=DATE}
+    </delete>
+
+    <!-- 统计时间效率记录数 -->
+    <select id="countByCity" resultType="int">
+        SELECT COUNT(*)
+        FROM time_efficiency_metrics
+        WHERE city = #{city,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 获取城市间时间效率对比 -->
+    <select id="getCityTimeEfficiencyComparison" resultType="java.util.Map">
+        SELECT
+        city,
+        AVG(fast_delivery_rate) as avg_fast_rate,
+        AVG(slow_delivery_rate) as avg_slow_rate,
+        AVG(avg_delivery_time) as avg_delivery_time,
+        SUM(total_deliveries) as total_deliveries,
+        COUNT(*) as record_count
+        FROM time_efficiency_metrics
+        WHERE city IN
+        <foreach collection="cities" item="city" open="(" separator="," close=")">
+            #{city,jdbcType=VARCHAR}
+        </foreach>
+        <if test="startDate != null">
+            AND date >= #{startDate,jdbcType=DATE}
+        </if>
+        <if test="endDate != null">
+            AND date <= #{endDate,jdbcType=DATE}
+        </if>
+        GROUP BY city
+        ORDER BY avg_fast_rate DESC
+    </select>
+
+</mapper>
