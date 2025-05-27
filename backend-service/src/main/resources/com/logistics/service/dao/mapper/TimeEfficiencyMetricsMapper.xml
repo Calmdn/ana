@@ -75,7 +75,7 @@
             AND date >= #{startDate,jdbcType=DATE}
         </if>
         <if test="endDate != null">
-            AND date <= #{endDate,jdbcType=DATE}
+            AND date &lt;= #{endDate,jdbcType=DATE}
         </if>
         ORDER BY date DESC
     </select>
@@ -103,13 +103,13 @@
                 AND date >= #{startDate,jdbcType=DATE}
             </if>
             <if test="endDate != null">
-                AND date <= #{endDate,jdbcType=DATE}
+                AND date &lt;= #{endDate,jdbcType=DATE}
             </if>
             <if test="minFastRate != null">
                 AND fast_delivery_rate >= #{minFastRate,jdbcType=DOUBLE}
             </if>
             <if test="maxSlowRate != null">
-                AND slow_delivery_rate <= #{maxSlowRate,jdbcType=DOUBLE}
+                AND slow_delivery_rate &lt;= #{maxSlowRate,jdbcType=DOUBLE}
             </if>
         </where>
         ORDER BY date DESC, fast_delivery_rate DESC
@@ -295,7 +295,7 @@
             AND date >= #{startDate,jdbcType=DATE}
         </if>
         <if test="endDate != null">
-            AND date <= #{endDate,jdbcType=DATE}
+            AND date &lt;= #{endDate,jdbcType=DATE}
         </if>
         GROUP BY city
         ORDER BY avg_fast_rate DESC
