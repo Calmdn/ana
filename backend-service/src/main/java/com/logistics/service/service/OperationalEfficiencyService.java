@@ -5,16 +5,15 @@ import com.logistics.service.dao.mapper.OperationalEfficiencyMetricsMapper;
 import com.logistics.service.dto.OperationalEfficiencyDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 
 @Slf4j
@@ -25,58 +24,70 @@ public class OperationalEfficiencyService {
     @Autowired
     private OperationalEfficiencyMetricsMapper operationalEfficiencyMapper;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    // ==================== 数据保存操作 ====================
 
     /**
-     * 保存运营效率数据
+     * 保存运营效率数据 - 保存后清除缓存
      */
     @Transactional
+    @CacheEvict(value = {"efficiency", "stats"}, allEntries = true)
     public int saveEfficiencyMetrics(OperationalEfficiencyMetrics metrics) {
         validateEfficiencyMetrics(metrics);
         calculateDerivedMetrics(metrics);
-        return operationalEfficiencyMapper.insertEfficiencyMetrics(metrics);
+
+        int result = operationalEfficiencyMapper.insertEfficiencyMetrics(metrics);
+        if (result > 0) {
+            log.info("✅ 保存运营效率数据成功，城市: {}，已清除缓存", metrics.getCity());
+        }
+        return result;
     }
 
     /**
-     * 批量保存运营效率数据
+     * 批量保存运营效率数据 - 保存后清除缓存
      */
     @Transactional
+    @CacheEvict(value = {"efficiency", "stats"}, allEntries = true)
     public int batchSaveEfficiencyMetrics(List<OperationalEfficiencyMetrics> metricsList) {
         for (OperationalEfficiencyMetrics metrics : metricsList) {
             validateEfficiencyMetrics(metrics);
             calculateDerivedMetrics(metrics);
         }
-        return operationalEfficiencyMapper.batchInsertEfficiencyMetrics(metricsList);
+
+        int result = operationalEfficiencyMapper.batchInsertEfficiencyMetrics(metricsList);
+        if (result > 0) {
+            log.info("✅ 批量保存运营效率数据成功，共保存 {} 条，已清除缓存", result);
+        }
+        return result;
     }
 
     /**
-     * 获取指定城市的运营效率数据
+     * 更新运营效率数据 - 更新后清除缓存
      */
+    @Transactional
+    @CacheEvict(value = {"efficiency", "stats"}, allEntries = true)
+    public int updateEfficiencyMetrics(OperationalEfficiencyMetrics metrics) {
+        validateEfficiencyMetrics(metrics);
+        calculateDerivedMetrics(metrics);
+
+        int result = operationalEfficiencyMapper.updateEfficiencyMetrics(metrics);
+        if (result > 0) {
+            log.info("✅ 更新运营效率数据成功，已清除缓存");
+        }
+        return result;
+    }
+
+    // ==================== 查询操作 ====================
+
+    /**
+     * 获取指定城市的运营效率数据 - 添加缓存
+     */
+    @Cacheable(value = "efficiency", key = "'city:' + #city + ':' + #startDate + ':' + #endDate",
+            unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByCity(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            String key = String.format("operational_efficiency:%s:%s:%s", city, startDate, endDate);
-
-            @SuppressWarnings("unchecked")
-            List<OperationalEfficiencyDTO> cache = (List<OperationalEfficiencyDTO>) redisTemplate.opsForValue().get(key);
-            if (cache != null) {
-                log.info("✅ 从 Redis 缓存获取运营效率[city={}], size={}", city, cache.size());
-                return cache;
-            }
-
-            log.info("🔍 Redis 未命中，查询 MySQL 运营效率[city={}]", city);
+            log.info("🔍 查询数据库获取运营效率[city={}]", city);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByCityAndDateRange(city, startDate, endDate);
-
-            List<OperationalEfficiencyDTO> result = metrics.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
-
-            if (!result.isEmpty()) {
-                redisTemplate.opsForValue().set(key, result, 45, TimeUnit.MINUTES);
-                log.info("💾 写入 Redis 缓存运营效率[city={}]，ttl=45m", city);
-            }
-
-            return result;
+            return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取运营效率数据失败", e);
             return new ArrayList<>();
@@ -84,14 +95,12 @@ public class OperationalEfficiencyService {
     }
 
     /**
-     * 获取指定配送员的效率数据
+     * 获取指定配送员的效率数据 - 不缓存（个人敏感数据）
      */
     public List<OperationalEfficiencyDTO> getEfficiencyByCourier(Integer courierId, LocalDate startDate, LocalDate endDate) {
         try {
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByCourierAndDateRange(courierId, startDate, endDate);
-            return metrics.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取配送员效率数据失败", e);
             return new ArrayList<>();
@@ -99,14 +108,15 @@ public class OperationalEfficiencyService {
     }
 
     /**
-     * 获取指定区域的效率数据
+     * 获取指定区域的效率数据 - 添加缓存
      */
+    @Cacheable(value = "efficiency", key = "'region:' + #regionId + ':' + #startDate + ':' + #endDate",
+            unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByRegion(Integer regionId, LocalDate startDate, LocalDate endDate) {
         try {
+            log.info("🔍 查询数据库获取区域效率[regionId={}]", regionId);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByRegionAndDateRange(regionId, startDate, endDate);
-            return metrics.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取区域效率数据失败", e);
             return new ArrayList<>();
@@ -114,16 +124,18 @@ public class OperationalEfficiencyService {
     }
 
     /**
-     * 多条件查询效率数据
+     * 多条件查询效率数据 - 添加缓存
      */
+    @Cacheable(value = "efficiency",
+            key = "'conditions:' + #city + ':' + #regionId + ':' + #courierId + ':' + #startDate + ':' + #endDate",
+            unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByConditions(String city, Integer regionId, Integer courierId,
                                                                     LocalDate startDate, LocalDate endDate) {
         try {
+            log.info("🔍 查询数据库获取多条件效率[city={}]", city);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByConditions(
                     city, regionId, courierId, startDate, endDate);
-            return metrics.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("多条件查询效率数据失败", e);
             return new ArrayList<>();
@@ -131,22 +143,23 @@ public class OperationalEfficiencyService {
     }
 
     /**
-     * 获取今日运营效率
+     * 获取今日运营效率 - 添加缓存
      */
+    @Cacheable(value = "efficiency", key = "'today:' + #city", unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getTodayEfficiency(String city) {
         LocalDate today = LocalDate.now();
         return getEfficiencyByCity(city, today, today);
     }
 
     /**
-     * 获取指定日期的效率数据
+     * 获取指定日期的效率数据 - 添加缓存
      */
+    @Cacheable(value = "efficiency", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByDate(String city, LocalDate date) {
         try {
+            log.info("🔍 查询数据库获取指定日期效率[city={}, date={}]", city, date);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByCityAndDate(city, date);
-            return metrics.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取指定日期效率数据失败", e);
             return new ArrayList<>();
@@ -154,114 +167,134 @@ public class OperationalEfficiencyService {
     }
 
     /**
-     * 获取城市效率趋势
+     * 获取低效率警告 - 添加缓存
      */
-    public List<Map<String, Object>> getCityEfficiencyTrend(String city, LocalDate startDate) {
-        return operationalEfficiencyMapper.getCityEfficiencyTrend(city, startDate);
-    }
-
-    /**
-     * 获取配送员效率排行
-     */
-    public List<Map<String, Object>> getCourierEfficiencyRanking(String city, LocalDate startDate, int limit) {
-        return operationalEfficiencyMapper.getCourierEfficiencyRanking(city, startDate, limit);
-    }
-
-    /**
-     * 获取区域效率排行
-     */
-    public List<Map<String, Object>> getRegionEfficiencyRanking(String city, LocalDate startDate, int limit) {
-        return operationalEfficiencyMapper.getRegionEfficiencyRanking(city, startDate, limit);
-    }
-
-    /**
-     * 获取效率分布统计
-     */
-    public List<Map<String, Object>> getEfficiencyDistribution(String city, LocalDate startDate) {
-        return operationalEfficiencyMapper.getEfficiencyDistribution(city, startDate);
-    }
-
-    /**
-     * 获取低效率警告
-     */
+    @Cacheable(value = "efficiency", key = "'low_alerts:' + #threshold + ':' + #startDate + ':' + #limit",
+            unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getLowEfficiencyAlerts(double threshold, LocalDate startDate, int limit) {
+        log.info("🔍 查询数据库获取低效率警告[threshold={}]", threshold);
         List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findLowEfficiencyAlerts(threshold, startDate, limit);
-        return metrics.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     /**
-     * 获取高效率表现
+     * 获取高效率表现 - 添加缓存
      */
+    @Cacheable(value = "efficiency", key = "'high_performance:' + #threshold + ':' + #startDate + ':' + #limit",
+            unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getHighEfficiencyPerformance(double threshold, LocalDate startDate, int limit) {
+        log.info("🔍 查询数据库获取高效率表现[threshold={}]", threshold);
         List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findHighEfficiencyPerformance(threshold, startDate, limit);
-        return metrics.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     /**
-     * 获取运营效率汇总统计
+     * 获取最新运营效率数据 - 添加缓存
      */
-    public Map<String, Object> getEfficiencySummary(String city, LocalDate startDate) {
-        return operationalEfficiencyMapper.getEfficiencySummary(city, startDate);
-    }
-
-    /**
-     * 获取最新运营效率数据
-     */
+    @Cacheable(value = "efficiency", key = "'latest:' + #city", unless = "#result == null")
     public OperationalEfficiencyDTO getLatestEfficiencyByCity(String city) {
+        log.info("🔍 查询数据库获取最新效率[city={}]", city);
         OperationalEfficiencyMetrics metrics = operationalEfficiencyMapper.findLatestByCity(city);
         return metrics != null ? convertToDTO(metrics) : null;
     }
 
     /**
-     * 获取配送员最新效率数据
+     * 获取配送员最新效率数据 - 不缓存（个人敏感数据）
      */
     public OperationalEfficiencyDTO getLatestEfficiencyByCourier(Integer courierId) {
         OperationalEfficiencyMetrics metrics = operationalEfficiencyMapper.findLatestByCourier(courierId);
         return metrics != null ? convertToDTO(metrics) : null;
     }
 
+    // ==================== 统计分析操作 ====================
+
     /**
-     * 更新运营效率数据
+     * 获取城市效率趋势 - 添加缓存
      */
-    @Transactional
-    public int updateEfficiencyMetrics(OperationalEfficiencyMetrics metrics) {
-        validateEfficiencyMetrics(metrics);
-        calculateDerivedMetrics(metrics);
-        return operationalEfficiencyMapper.updateEfficiencyMetrics(metrics);
+    @Cacheable(value = "stats", key = "'trend:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
+    public List<Map<String, Object>> getCityEfficiencyTrend(String city, LocalDate startDate) {
+        log.info("🔍 查询数据库获取城市效率趋势[city={}]", city);
+        return operationalEfficiencyMapper.getCityEfficiencyTrend(city, startDate);
     }
 
     /**
-     * 清理旧数据
+     * 获取配送员效率排行 - 添加缓存
      */
-    @Transactional
-    public int cleanupOldData(LocalDate cutoffDate) {
-        return operationalEfficiencyMapper.cleanupOldMetrics(cutoffDate);
+    @Cacheable(value = "stats", key = "'courier_ranking:' + #city + ':' + #startDate + ':' + #limit",
+            unless = "#result.isEmpty()")
+    public List<Map<String, Object>> getCourierEfficiencyRanking(String city, LocalDate startDate, int limit) {
+        log.info("🔍 查询数据库获取配送员效率排行[city={}]", city);
+        return operationalEfficiencyMapper.getCourierEfficiencyRanking(city, startDate, limit);
     }
 
     /**
-     * 统计城市效率记录数
+     * 获取区域效率排行 - 添加缓存
+     */
+    @Cacheable(value = "stats", key = "'region_ranking:' + #city + ':' + #startDate + ':' + #limit",
+            unless = "#result.isEmpty()")
+    public List<Map<String, Object>> getRegionEfficiencyRanking(String city, LocalDate startDate, int limit) {
+        log.info("🔍 查询数据库获取区域效率排行[city={}]", city);
+        return operationalEfficiencyMapper.getRegionEfficiencyRanking(city, startDate, limit);
+    }
+
+    /**
+     * 获取效率分布统计 - 添加缓存
+     */
+    @Cacheable(value = "stats", key = "'distribution:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
+    public List<Map<String, Object>> getEfficiencyDistribution(String city, LocalDate startDate) {
+        log.info("🔍 查询数据库获取效率分布统计[city={}]", city);
+        return operationalEfficiencyMapper.getEfficiencyDistribution(city, startDate);
+    }
+
+    /**
+     * 获取运营效率汇总统计 - 添加缓存
+     */
+    @Cacheable(value = "stats", key = "'summary:' + #city + ':' + #startDate", unless = "#result == null")
+    public Map<String, Object> getEfficiencySummary(String city, LocalDate startDate) {
+        log.info("🔍 查询数据库获取效率汇总统计[city={}]", city);
+        return operationalEfficiencyMapper.getEfficiencySummary(city, startDate);
+    }
+
+    /**
+     * 获取城市间效率对比 - 添加缓存
+     */
+    @Cacheable(value = "stats", key = "'comparison:' + #cities.toString() + ':' + #startDate + ':' + #endDate",
+            unless = "#result.isEmpty()")
+    public List<Map<String, Object>> getCityEfficiencyComparison(List<String> cities, LocalDate startDate, LocalDate endDate) {
+        log.info("🔍 查询数据库获取城市效率对比，城市数: {}", cities.size());
+        return operationalEfficiencyMapper.getCityEfficiencyComparison(cities, startDate, endDate);
+    }
+
+    /**
+     * 统计城市效率记录数 - 不缓存（简单计数查询）
      */
     public int countByCity(String city) {
         return operationalEfficiencyMapper.countByCity(city);
     }
 
     /**
-     * 统计配送员记录数
+     * 统计配送员记录数 - 不缓存（简单计数查询）
      */
     public int countByCourier(Integer courierId) {
         return operationalEfficiencyMapper.countByCourier(courierId);
     }
 
+    // ==================== 数据维护 ====================
+
     /**
-     * 获取城市间效率对比
+     * 清理旧数据 - 清理后清除缓存
      */
-    public List<Map<String, Object>> getCityEfficiencyComparison(List<String> cities, LocalDate startDate, LocalDate endDate) {
-        return operationalEfficiencyMapper.getCityEfficiencyComparison(cities, startDate, endDate);
+    @Transactional
+    @CacheEvict(value = {"efficiency", "stats"}, allEntries = true)
+    public int cleanupOldData(LocalDate cutoffDate) {
+        int result = operationalEfficiencyMapper.cleanupOldMetrics(cutoffDate);
+        if (result > 0) {
+            log.info("✅ 清理旧运营效率数据成功，删除 {} 条记录，已清除缓存", result);
+        }
+        return result;
     }
+
+    // ==================== 私有方法 ====================
 
     /**
      * 数据验证

@@ -5,17 +5,16 @@ import com.logistics.service.dao.mapper.SparkJobLogsMapper;
 import com.logistics.service.dto.SparkJobLogsDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,56 +24,65 @@ public class SparkJobLogsService {
     @Autowired
     private SparkJobLogsMapper sparkJobLogsMapper;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    // ==================== 数据保存操作 ====================
 
     /**
-     * 保存作业日志
+     * 保存作业日志 - 保存后清除缓存
      */
     @Transactional
+    @CacheEvict(value = {"jobs", "stats"}, allEntries = true)
     public int saveJob(SparkJobLogs job) {
         validateJob(job);
-        return sparkJobLogsMapper.insertJob(job);
+
+        int result = sparkJobLogsMapper.insertJob(job);
+        if (result > 0) {
+            log.info("✅ 保存作业日志成功，作业: {}，已清除缓存", job.getJobName());
+        }
+        return result;
     }
 
     /**
-     * 批量保存作业日志
+     * 批量保存作业日志 - 保存后清除缓存
      */
     @Transactional
+    @CacheEvict(value = {"jobs", "stats"}, allEntries = true)
     public int batchSaveJobs(List<SparkJobLogs> jobList) {
         for (SparkJobLogs job : jobList) {
             validateJob(job);
         }
-        return sparkJobLogsMapper.batchInsertJobs(jobList);
+
+        int result = sparkJobLogsMapper.batchInsertJobs(jobList);
+        if (result > 0) {
+            log.info("✅ 批量保存作业日志成功，共保存 {} 条，已清除缓存", result);
+        }
+        return result;
     }
 
     /**
-     * 获取最近的作业日志
+     * 更新作业状态 - 更新后清除缓存
      */
+    @Transactional
+    @CacheEvict(value = {"jobs", "stats"}, allEntries = true)
+    public int updateJobStatus(Long id, String status, LocalDateTime endTime,
+                               Integer executionTimeSeconds, String errorMessage) {
+        int result = sparkJobLogsMapper.updateJobStatus(id, status, endTime, executionTimeSeconds, errorMessage);
+        if (result > 0) {
+            log.info("✅ 更新作业状态成功，ID: {}，已清除缓存", id);
+        }
+        return result;
+    }
+
+    // ==================== 查询操作 ====================
+
+    /**
+     * 获取最近的作业日志 - 添加缓存
+     */
+    @Cacheable(value = "jobs", key = "'recent:' + #limit", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getRecentJobLogs(int limit) {
         try {
-            String key = "spark_jobs:recent:" + limit;
-
-            @SuppressWarnings("unchecked")
-            List<SparkJobLogsDTO> cache = (List<SparkJobLogsDTO>) redisTemplate.opsForValue().get(key);
-            if (cache != null) {
-                log.info("✅ 从 Redis 缓存获取最近作业日志, size={}", cache.size());
-                return cache;
-            }
-
-            log.info("🔍 Redis 未命中，查询 MySQL 最近作业日志");
+            log.info("🔍 查询数据库获取最近作业日志[limit={}]", limit);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findRecentJobs(limit);
-
-            List<SparkJobLogsDTO> result = logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
-
-            if (!result.isEmpty()) {
-                redisTemplate.opsForValue().set(key, result, 5, TimeUnit.MINUTES);
-                log.info("💾 写入 Redis 缓存最近作业日志，ttl=5m");
-            }
-
-            return result;
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取最近作业日志失败", e);
             return new ArrayList<>();
@@ -82,30 +90,14 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 按状态获取作业日志
+     * 按状态获取作业日志 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'status:' + #status", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobLogsByStatus(String status) {
         try {
-            String key = "spark_jobs:status:" + status;
-
-            @SuppressWarnings("unchecked")
-            List<SparkJobLogsDTO> cache = (List<SparkJobLogsDTO>) redisTemplate.opsForValue().get(key);
-            if (cache != null) {
-                log.info("✅ 从 Redis 缓存获取状态作业日志[status={}], size={}", status, cache.size());
-                return cache;
-            }
-
+            log.info("🔍 查询数据库获取状态作业日志[status={}]", status);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findByStatus(status);
-            List<SparkJobLogsDTO> result = logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
-
-            if (!result.isEmpty()) {
-                redisTemplate.opsForValue().set(key, result, 3, TimeUnit.MINUTES);
-                log.info("💾 写入 Redis 缓存状态作业日志[status={}]，ttl=3m", status);
-            }
-
-            return result;
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("按状态获取作业日志失败", e);
             return new ArrayList<>();
@@ -113,14 +105,14 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 按作业名称获取日志
+     * 按作业名称获取日志 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'name:' + #jobName", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobLogsByName(String jobName) {
         try {
+            log.info("🔍 查询数据库获取作业日志[jobName={}]", jobName);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findByJobName(jobName);
-            return logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("按作业名称获取日志失败", e);
             return new ArrayList<>();
@@ -128,28 +120,30 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取失败的作业
+     * 获取失败的作业 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'failed'", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getFailedJobs() {
         return getJobLogsByStatus("FAILED");
     }
 
     /**
-     * 获取运行中的作业
+     * 获取运行中的作业 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'running'", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getRunningJobs() {
         return getJobLogsByStatus("RUNNING");
     }
 
     /**
-     * 获取成功的作业
+     * 获取成功的作业 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'successful:' + #limit", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getSuccessfulJobs(int limit) {
         try {
+            log.info("🔍 查询数据库获取成功作业[limit={}]", limit);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findSuccessfulJobs(limit);
-            return logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取成功作业失败", e);
             return new ArrayList<>();
@@ -157,30 +151,14 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取指定时间范围的作业日志
+     * 获取指定时间范围的作业日志 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'range:' + #startTime + ':' + #endTime", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobLogsByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
         try {
-            String key = String.format("spark_jobs:range:%s:%s", startTime, endTime);
-
-            @SuppressWarnings("unchecked")
-            List<SparkJobLogsDTO> cache = (List<SparkJobLogsDTO>) redisTemplate.opsForValue().get(key);
-            if (cache != null) {
-                log.info("✅ 从 Redis 缓存获取时间范围作业日志, size={}", cache.size());
-                return cache;
-            }
-
+            log.info("🔍 查询数据库获取时间范围作业日志[{} - {}]", startTime, endTime);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findByTimeRange(startTime, endTime);
-            List<SparkJobLogsDTO> result = logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
-
-            if (!result.isEmpty()) {
-                redisTemplate.opsForValue().set(key, result, 15, TimeUnit.MINUTES);
-                log.info("💾 写入 Redis 缓存时间范围作业日志，ttl=15m");
-            }
-
-            return result;
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("按时间范围获取作业日志失败", e);
             return new ArrayList<>();
@@ -188,8 +166,9 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取今日作业日志
+     * 获取今日作业日志 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'today'", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getTodayJobs() {
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endOfDay = startOfDay.plusDays(1).minusNanos(1);
@@ -197,14 +176,14 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取长时间运行的作业
+     * 获取长时间运行的作业 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'long_running:' + #thresholdMinutes", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getLongRunningJobs(int thresholdMinutes) {
         try {
+            log.info("🔍 查询数据库获取长时间运行作业[threshold={}分钟]", thresholdMinutes);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findLongRunningJobs(thresholdMinutes * 60);
-            return logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取长时间运行作业失败", e);
             return new ArrayList<>();
@@ -212,14 +191,14 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取有错误的作业
+     * 获取有错误的作业 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'with_errors:' + #limit", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobsWithErrors(int limit) {
         try {
+            log.info("🔍 查询数据库获取有错误的作业[limit={}]", limit);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findJobsWithErrors(limit);
-            return logs.stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("获取有错误的作业失败", e);
             return new ArrayList<>();
@@ -227,19 +206,29 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取作业统计信息
+     * 根据ID获取作业详情 - 添加缓存
      */
+    @Cacheable(value = "jobs", key = "'id:' + #id", unless = "#result == null")
+    public SparkJobLogsDTO getJobById(Long id) {
+        try {
+            log.info("🔍 查询数据库获取作业详情[id={}]", id);
+            SparkJobLogs job = sparkJobLogsMapper.findById(id);
+            return job != null ? convertToDTO(job) : null;
+        } catch (Exception e) {
+            log.error("根据ID获取作业失败", e);
+            return null;
+        }
+    }
+
+    // ==================== 统计分析操作 ====================
+
+    /**
+     * 获取作业统计信息 - 添加缓存
+     */
+    @Cacheable(value = "stats", key = "'statistics'")
     public Map<String, Object> getJobStatistics() {
         try {
-            String key = "spark_jobs:statistics";
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> cache = (Map<String, Object>) redisTemplate.opsForValue().get(key);
-            if (cache != null) {
-                log.info("✅ 从 Redis 缓存获取作业统计信息");
-                return cache;
-            }
-
+            log.info("🔍 查询数据库获取作业统计信息");
             Map<String, Object> statistics = new HashMap<>();
 
             // 获取总数量
@@ -265,9 +254,6 @@ public class SparkJobLogsService {
             statistics.put("avgExecutionTime", avgExecutionTime != null ? Math.round(avgExecutionTime) : 0);
             statistics.put("totalProcessedRecords", totalProcessedRecords != null ? totalProcessedRecords : 0L);
 
-            redisTemplate.opsForValue().set(key, statistics, 10, TimeUnit.MINUTES);
-            log.info("💾 写入 Redis 缓存作业统计信息，ttl=10m");
-
             return statistics;
         } catch (Exception e) {
             log.error("获取作业统计失败", e);
@@ -278,10 +264,12 @@ public class SparkJobLogsService {
     }
 
     /**
-     * 获取作业执行趋势
+     * 获取作业执行趋势 - 添加缓存
      */
+    @Cacheable(value = "stats", key = "'trend:' + #days", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getJobExecutionTrend(int days) {
         try {
+            log.info("🔍 查询数据库获取作业执行趋势[days={}]", days);
             LocalDateTime startTime = LocalDateTime.now().minusDays(days);
             return sparkJobLogsMapper.getJobExecutionTrend(startTime);
         } catch (Exception e) {
@@ -290,40 +278,19 @@ public class SparkJobLogsService {
         }
     }
 
+    // ==================== 数据维护 ====================
 
     /**
-     * 根据ID获取作业详情
-     */
-    public SparkJobLogsDTO getJobById(Long id) {
-        try {
-            SparkJobLogs job = sparkJobLogsMapper.findById(id);
-            return job != null ? convertToDTO(job) : null;
-        } catch (Exception e) {
-            log.error("根据ID获取作业失败", e);
-            return null;
-        }
-    }
-
-    /**
-     * 更新作业状态
+     * 清理旧的作业日志 - 清理后清除缓存
      */
     @Transactional
-    public int updateJobStatus(Long id, String status, LocalDateTime endTime, Integer executionTimeSeconds, String errorMessage) {
-        return sparkJobLogsMapper.updateJobStatus(id, status, endTime, executionTimeSeconds, errorMessage);
-    }
-
-    /**
-     * 清理旧的作业日志
-     */
-    @Transactional
+    @CacheEvict(value = {"jobs", "stats"}, allEntries = true)
     public int cleanupOldJobs(int daysToKeep) {
         try {
             LocalDateTime cutoffTime = LocalDateTime.now().minusDays(daysToKeep);
             int deletedCount = sparkJobLogsMapper.cleanupOldJobs(cutoffTime);
             if (deletedCount > 0) {
-                // 清除相关缓存
-                clearJobsCache();
-                log.info("🗑️ 清理旧作业日志完成，删除 {} 条记录", deletedCount);
+                log.info("✅ 清理旧作业日志完成，删除 {} 条记录，已清除缓存", deletedCount);
             }
             return deletedCount;
         } catch (Exception e) {
@@ -331,6 +298,8 @@ public class SparkJobLogsService {
             return 0;
         }
     }
+
+    // ==================== 私有方法 ====================
 
     /**
      * 数据验证
@@ -341,18 +310,6 @@ public class SparkJobLogsService {
         }
         if (job.getStatus() == null || job.getStatus().trim().isEmpty()) {
             throw new IllegalArgumentException("作业状态不能为空");
-        }
-    }
-
-    /**
-     * 清除作业相关缓存
-     */
-    private void clearJobsCache() {
-        try {
-            redisTemplate.delete(redisTemplate.keys("spark_jobs:*"));
-            log.info("🗑️ 已清除作业相关缓存");
-        } catch (Exception e) {
-            log.warn("清除作业缓存失败", e);
         }
     }
 

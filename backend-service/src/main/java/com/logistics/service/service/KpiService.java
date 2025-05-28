@@ -5,15 +5,14 @@ import com.logistics.service.dao.mapper.RealtimeKpiMapper;
 import com.logistics.service.dto.KpiDataDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,42 +21,19 @@ public class KpiService {
     @Autowired
     private RealtimeKpiMapper realtimeKpiMapper;
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-
     /**
-     * 获取指定城市今天的KPI数据
+     * 获取指定城市今天的KPI数据 - 添加缓存
      */
+    @Cacheable(value = "kpi", key = "'today:' + #city", unless = "#result.isEmpty()")
     public List<KpiDataDTO> getTodayKpiByCity(String city) {
         try {
             LocalDate today = LocalDate.now();
-            String key = "kpi:" + city + ":" + today;
+            log.info("🔍 查询数据库获取今日KPI[city={}, date={}]", city, today);
 
-            // 1. 尝试从 Redis 缓存读取
-            @SuppressWarnings("unchecked")
-            List<KpiDataDTO> cache = (List<KpiDataDTO>) redisTemplate.opsForValue().get(key);
-            if (cache != null) {
-                log.info("✅ 从 Redis 缓存获取 KPI[city={}, date={}], size={}", city, today, cache.size());
-                return cache;
-            }
-
-            // 2. 缓存未命中，查询 MySQL
-            log.info("🔍 Redis 未命中，查询 MySQL KPI[city={}, date={}]", city, today);
             List<RealtimeKpi> kpiList = realtimeKpiMapper.findByCityAndDate(city, today);
-
-            // 3. 转换并写回 Redis（30 分钟过期）
-            List<KpiDataDTO> result = kpiList.stream()
+            return kpiList.stream()
                     .map(this::convertToDTO)
                     .collect(Collectors.toList());
-
-            if (!result.isEmpty()) {
-                redisTemplate.opsForValue().set(key, result, 30, TimeUnit.MINUTES);
-                log.info("💾 写入 Redis 缓存 KPI[city={}, date={}]，ttl=30m", city, today);
-            } else {
-                log.warn("⚠️ MySQL 无数据，未写入缓存 city={}, date={}", city, today);
-            }
-
-            return result;
         } catch (Exception e) {
             log.error("获取KPI数据失败", e);
             return new ArrayList<>();
@@ -65,10 +41,12 @@ public class KpiService {
     }
 
     /**
-     * 根据城市和日期获取KPI数据
+     * 根据城市和日期获取KPI数据 - 添加缓存
      */
+    @Cacheable(value = "kpi", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<KpiDataDTO> getKpiByDate(String city, LocalDate date) {
         try {
+            log.info("🔍 查询数据库获取KPI[city={}, date={}]", city, date);
             List<RealtimeKpi> kpiList = realtimeKpiMapper.findByCityAndDate(city, date);
             return kpiList.stream()
                     .map(this::convertToDTO)
@@ -80,10 +58,12 @@ public class KpiService {
     }
 
     /**
-     * 获取最近几天的KPI数据
+     * 获取最近几天的KPI数据 - 添加缓存
      */
+    @Cacheable(value = "kpi", key = "'recent:' + #city + ':' + #days", unless = "#result.isEmpty()")
     public List<KpiDataDTO> getRecentKpi(String city, int days) {
         try {
+            log.info("🔍 查询数据库获取最近KPI[city={}, days={}]", city, days);
             List<RealtimeKpi> kpiList = realtimeKpiMapper.findRecentKpiByCity(city, days);
             return kpiList.stream()
                     .map(this::convertToDTO)
@@ -95,11 +75,13 @@ public class KpiService {
     }
 
     /**
-     * 获取系统健康状态
+     * 获取系统健康状态 - 添加缓存
      */
+    @Cacheable(value = "kpi", key = "'health'")
     public String getSystemHealth() {
         try {
             LocalDate today = LocalDate.now();
+            log.info("🔍 查询数据库检查系统健康状态");
             List<RealtimeKpi> todayData = realtimeKpiMapper.findByCityAndDate("Shanghai", today);
 
             if (todayData.isEmpty()) {
@@ -115,14 +97,20 @@ public class KpiService {
     }
 
     /**
-     * 清理旧数据
+     * 清理旧数据 - 清理后清除缓存
      */
+    @Transactional
+    @CacheEvict(value = "kpi", allEntries = true)
     public int cleanupOldData(LocalDate cutoffDate) {
-        return realtimeKpiMapper.cleanupOldKpi(cutoffDate);
+        int result = realtimeKpiMapper.cleanupOldKpi(cutoffDate);
+        if (result > 0) {
+            log.info("✅ 清理旧KPI数据成功，删除 {} 条记录，已清除缓存", result);
+        }
+        return result;
     }
 
     /**
-     * 统计记录数
+     * 统计记录数 - 不缓存（简单计数查询）
      */
     public int countByCity(String city) {
         return realtimeKpiMapper.countByCity(city);
