@@ -19,12 +19,6 @@ public class OperationalEfficiencyDTO {
     private BigDecimal distancePerOrder;
     private BigDecimal efficiencyScore;
 
-    // 新增字段：便于前端展示和分析
-    private String efficiencyLevel;     // 效率等级
-    private String workloadLevel;       // 工作强度等级
-    private BigDecimal aoiCoverageRate; // AOI覆盖率
-    private BigDecimal distanceEfficiency; // 距离效率
-
 
     // 便于调试和日志输出
     @Override

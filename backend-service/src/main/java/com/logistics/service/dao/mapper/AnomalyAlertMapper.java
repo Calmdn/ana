@@ -76,9 +76,17 @@ public interface AnomalyAlertMapper {
     /**
      * 动态统计告警数量
      */
+//    int countAlerts(@Param("city") String city,
+//                    @Param("anomalyType") String anomalyType,
+//                    @Param("severity") String severity,
+//                    @Param("startDate") LocalDate startDate,
+//                    @Param("endDate") LocalDate endDate,
+//                    @Param("isResolved") Boolean isResolved);
     int countAlerts(@Param("city") String city,
                     @Param("anomalyType") String anomalyType,
                     @Param("severity") String severity,
+                    @Param("courierId") String courierId,
+                    @Param("orderId") String orderId,
                     @Param("startDate") LocalDate startDate,
                     @Param("endDate") LocalDate endDate,
                     @Param("isResolved") Boolean isResolved);

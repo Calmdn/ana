@@ -357,7 +357,7 @@ public class AnomalyAlertService {
     public int getAlertsCount(String city, String anomalyType, String severity,
                               LocalDate startDate, LocalDate endDate, Boolean isResolved) {
         try {
-            return anomalyAlertMapper.countAlerts(city, anomalyType, severity, startDate, endDate, isResolved);
+            return anomalyAlertMapper.countAlerts(city, anomalyType, severity,null,null, startDate, endDate, isResolved);
         } catch (Exception e) {
             log.error("获取告警数量统计失败", e);
             return 0;
