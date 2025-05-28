@@ -17,13 +17,7 @@ public class LogisticsServiceApplication {
     public static void main(String[] args) {
         // Java 8 兼容的系统属性设置
         System.setProperty("spring.profiles.default", "dev");
-
-        System.out.println("🚀 Starting Logistics Analysis Platform (Java 8)...");
-        System.out.println("📊 Features: Spark Analysis + REST API + Redis Cache");
-        System.out.println("🌐 Access: http://localhost:8080");
-
         SpringApplication.run(LogisticsServiceApplication.class, args);
-
-        System.out.println("✅ Logistics Service Started Successfully!");
+        System.out.println("物流分析服务启动成功!");
     }
 }
