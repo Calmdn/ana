@@ -11,14 +11,14 @@ public class KpiDataDTO {
     private Integer hour;
     private Long totalOrders;
     private Integer activeCouriers;
+    private Integer coverageAois;
+    private BigDecimal ordersPerCourier;
+    private BigDecimal ordersPerAoi;
     private BigDecimal efficiencyScore;
-    private BigDecimal fastDeliveryRate;
 
-    // 计算属性
-    public BigDecimal getOrdersPerCourier() {
-        if (activeCouriers != null && activeCouriers > 0) {
-            return BigDecimal.valueOf(totalOrders).divide(BigDecimal.valueOf(activeCouriers), 2, BigDecimal.ROUND_HALF_UP);
-        }
-        return BigDecimal.ZERO;
+    @Override
+    public String toString() {
+        return String.format("KpiDataDTO{city='%s', date=%s, hour=%d, totalOrders=%d}",
+                city, date, hour, totalOrders);
     }
 }

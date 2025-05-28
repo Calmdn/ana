@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
@@ -17,6 +19,7 @@ import java.util.HashMap;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 public class SparkJobLogsService {
 
     @Autowired
@@ -24,6 +27,26 @@ public class SparkJobLogsService {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    /**
+     * 保存作业日志
+     */
+    @Transactional
+    public int saveJob(SparkJobLogs job) {
+        validateJob(job);
+        return sparkJobLogsMapper.insertJob(job);
+    }
+
+    /**
+     * 批量保存作业日志
+     */
+    @Transactional
+    public int batchSaveJobs(List<SparkJobLogs> jobList) {
+        for (SparkJobLogs job : jobList) {
+            validateJob(job);
+        }
+        return sparkJobLogsMapper.batchInsertJobs(jobList);
+    }
 
     /**
      * 获取最近的作业日志
@@ -189,6 +212,21 @@ public class SparkJobLogsService {
     }
 
     /**
+     * 获取有错误的作业
+     */
+    public List<SparkJobLogsDTO> getJobsWithErrors(int limit) {
+        try {
+            List<SparkJobLogs> logs = sparkJobLogsMapper.findJobsWithErrors(limit);
+            return logs.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("获取有错误的作业失败", e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
      * 获取作业统计信息
      */
     public Map<String, Object> getJobStatistics() {
@@ -202,38 +240,30 @@ public class SparkJobLogsService {
                 return cache;
             }
 
-            List<SparkJobLogs> allJobs = sparkJobLogsMapper.findRecentJobs(1000);
+            Map<String, Object> statistics = new HashMap<>();
 
-            long totalJobs = allJobs.size();
-            long successJobs = allJobs.stream().filter(job -> "SUCCESS".equals(job.getStatus())).count();
-            long failedJobs = allJobs.stream().filter(job -> "FAILED".equals(job.getStatus())).count();
-            long runningJobs = allJobs.stream().filter(job -> "RUNNING".equals(job.getStatus())).count();
+            // 获取总数量
+            int totalJobs = sparkJobLogsMapper.countTotalJobs();
+            int successJobs = sparkJobLogsMapper.countJobsByStatus("SUCCESS");
+            int failedJobs = sparkJobLogsMapper.countJobsByStatus("FAILED");
+            int runningJobs = sparkJobLogsMapper.countJobsByStatus("RUNNING");
 
+            // 计算比率
             double successRate = totalJobs > 0 ? (double) successJobs / totalJobs * 100 : 0;
             double failureRate = totalJobs > 0 ? (double) failedJobs / totalJobs * 100 : 0;
 
-            // 计算平均执行时间
-            double avgExecutionTime = allJobs.stream()
-                    .filter(job -> job.getExecutionTimeSeconds() != null)
-                    .mapToInt(SparkJobLogs::getExecutionTimeSeconds)
-                    .average()
-                    .orElse(0.0);
+            // 获取平均执行时间和总处理记录数
+            Double avgExecutionTime = sparkJobLogsMapper.getAverageExecutionTime();
+            Long totalProcessedRecords = sparkJobLogsMapper.getTotalProcessedRecords();
 
-            // 计算总处理记录数
-            long totalProcessedRecords = allJobs.stream()
-                    .filter(job -> job.getProcessedRecords() != null)
-                    .mapToLong(SparkJobLogs::getProcessedRecords)
-                    .sum();
-
-            Map<String, Object> statistics = new HashMap<>();
             statistics.put("totalJobs", totalJobs);
             statistics.put("successJobs", successJobs);
             statistics.put("failedJobs", failedJobs);
             statistics.put("runningJobs", runningJobs);
             statistics.put("successRate", Math.round(successRate * 100.0) / 100.0);
             statistics.put("failureRate", Math.round(failureRate * 100.0) / 100.0);
-            statistics.put("avgExecutionTime", Math.round(avgExecutionTime));
-            statistics.put("totalProcessedRecords", totalProcessedRecords);
+            statistics.put("avgExecutionTime", avgExecutionTime != null ? Math.round(avgExecutionTime) : 0);
+            statistics.put("totalProcessedRecords", totalProcessedRecords != null ? totalProcessedRecords : 0L);
 
             redisTemplate.opsForValue().set(key, statistics, 10, TimeUnit.MINUTES);
             log.info("💾 写入 Redis 缓存作业统计信息，ttl=10m");
@@ -253,13 +283,13 @@ public class SparkJobLogsService {
     public List<Map<String, Object>> getJobExecutionTrend(int days) {
         try {
             LocalDateTime startTime = LocalDateTime.now().minusDays(days);
-            List<Map<String, Object>> trendData = sparkJobLogsMapper.getJobExecutionTrend(startTime);
-            return trendData;
+            return sparkJobLogsMapper.getJobExecutionTrend(startTime);
         } catch (Exception e) {
             log.error("获取作业执行趋势失败", e);
             return new ArrayList<>();
         }
     }
+
 
     /**
      * 根据ID获取作业详情
@@ -275,8 +305,17 @@ public class SparkJobLogsService {
     }
 
     /**
+     * 更新作业状态
+     */
+    @Transactional
+    public int updateJobStatus(Long id, String status, LocalDateTime endTime, Integer executionTimeSeconds, String errorMessage) {
+        return sparkJobLogsMapper.updateJobStatus(id, status, endTime, executionTimeSeconds, errorMessage);
+    }
+
+    /**
      * 清理旧的作业日志
      */
+    @Transactional
     public int cleanupOldJobs(int daysToKeep) {
         try {
             LocalDateTime cutoffTime = LocalDateTime.now().minusDays(daysToKeep);
@@ -294,6 +333,18 @@ public class SparkJobLogsService {
     }
 
     /**
+     * 数据验证
+     */
+    private void validateJob(SparkJobLogs job) {
+        if (job.getJobName() == null || job.getJobName().trim().isEmpty()) {
+            throw new IllegalArgumentException("作业名称不能为空");
+        }
+        if (job.getStatus() == null || job.getStatus().trim().isEmpty()) {
+            throw new IllegalArgumentException("作业状态不能为空");
+        }
+    }
+
+    /**
      * 清除作业相关缓存
      */
     private void clearJobsCache() {
@@ -305,6 +356,9 @@ public class SparkJobLogsService {
         }
     }
 
+    /**
+     * 实体转DTO
+     */
     private SparkJobLogsDTO convertToDTO(SparkJobLogs logs) {
         SparkJobLogsDTO dto = new SparkJobLogsDTO();
         dto.setId(logs.getId());

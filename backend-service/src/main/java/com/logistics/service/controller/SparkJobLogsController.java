@@ -1,5 +1,6 @@
 package com.logistics.service.controller;
 
+import com.logistics.service.dao.entity.SparkJobLogs;
 import com.logistics.service.dto.SparkJobLogsDTO;
 import com.logistics.service.dto.SimpleResponse;
 import com.logistics.service.service.SparkJobLogsService;
@@ -7,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,36 @@ public class SparkJobLogsController {
 
     @Autowired
     private SparkJobLogsService sparkJobLogsService;
+
+    /**
+     * 保存作业日志
+     */
+    @PostMapping
+    public SimpleResponse<String> saveJob(@RequestBody SparkJobLogs job) {
+        try {
+            log.info("保存作业日志: jobName={}, status={}", job.getJobName(), job.getStatus());
+            int result = sparkJobLogsService.saveJob(job);
+            return SimpleResponse.success("保存成功，影响行数: " + result);
+        } catch (Exception e) {
+            log.error("保存作业日志失败", e);
+            return SimpleResponse.error("保存失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量保存作业日志
+     */
+    @PostMapping("/batch")
+    public SimpleResponse<String> batchSaveJobs(@RequestBody List<SparkJobLogs> jobList) {
+        try {
+            log.info("批量保存作业日志，数量: {}", jobList.size());
+            int result = sparkJobLogsService.batchSaveJobs(jobList);
+            return SimpleResponse.success("批量保存成功，影响行数: " + result);
+        } catch (Exception e) {
+            log.error("批量保存作业日志失败", e);
+            return SimpleResponse.error("批量保存失败: " + e.getMessage());
+        }
+    }
 
     /**
      * 获取最近的作业日志
@@ -161,6 +193,22 @@ public class SparkJobLogsController {
     }
 
     /**
+     * 获取有错误的作业
+     */
+    @GetMapping("/errors")
+    public SimpleResponse<List<SparkJobLogsDTO>> getJobsWithErrors(
+            @RequestParam(defaultValue = "20") int limit) {
+        try {
+            log.info("请求有错误的作业，限制 {} 条", limit);
+            List<SparkJobLogsDTO> jobs = sparkJobLogsService.getJobsWithErrors(limit);
+            return SimpleResponse.success(jobs);
+        } catch (Exception e) {
+            log.error("获取有错误的作业失败", e);
+            return SimpleResponse.error("获取数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 根据ID获取作业详情
      */
     @GetMapping("/{id}")
@@ -207,6 +255,26 @@ public class SparkJobLogsController {
         } catch (Exception e) {
             log.error("获取作业执行趋势失败", e);
             return SimpleResponse.error("获取数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新作业状态
+     */
+    @PutMapping("/{id}/status")
+    public SimpleResponse<String> updateJobStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
+            @RequestParam(required = false) Integer executionTimeSeconds,
+            @RequestParam(required = false) String errorMessage) {
+        try {
+            log.info("更新作业 {} 状态为 {}", id, status);
+            int result = sparkJobLogsService.updateJobStatus(id, status, endTime, executionTimeSeconds, errorMessage);
+            return SimpleResponse.success("更新成功，影响行数: " + result);
+        } catch (Exception e) {
+            log.error("更新作业状态失败", e);
+            return SimpleResponse.error("更新失败: " + e.getMessage());
         }
     }
 

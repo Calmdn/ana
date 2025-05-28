@@ -7,12 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ public class KpiService {
     private RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 获取指定城市今天的KPI数据（先 Redis 缓存，缓存未命中再读 MySQL 并写回缓存）
+     * 获取指定城市今天的KPI数据
      */
     public List<KpiDataDTO> getTodayKpiByCity(String city) {
         try {
@@ -42,7 +43,7 @@ public class KpiService {
 
             // 2. 缓存未命中，查询 MySQL
             log.info("🔍 Redis 未命中，查询 MySQL KPI[city={}, date={}]", city, today);
-            List<RealtimeKpi> kpiList = realtimeKpiMapper.findBycityAndDate(city, today);
+            List<RealtimeKpi> kpiList = realtimeKpiMapper.findByCityAndDate(city, today);
 
             // 3. 转换并写回 Redis（30 分钟过期）
             List<KpiDataDTO> result = kpiList.stream()
@@ -64,14 +65,42 @@ public class KpiService {
     }
 
     /**
-     * 获取系统健康状态（简单版）
+     * 根据城市和日期获取KPI数据
+     */
+    public List<KpiDataDTO> getKpiByDate(String city, LocalDate date) {
+        try {
+            List<RealtimeKpi> kpiList = realtimeKpiMapper.findByCityAndDate(city, date);
+            return kpiList.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("根据日期获取KPI数据失败", e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 获取最近几天的KPI数据
+     */
+    public List<KpiDataDTO> getRecentKpi(String city, int days) {
+        try {
+            List<RealtimeKpi> kpiList = realtimeKpiMapper.findRecentKpiByCity(city, days);
+            return kpiList.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("获取最近KPI数据失败", e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 获取系统健康状态
      */
     public String getSystemHealth() {
         try {
             LocalDate today = LocalDate.now();
-
-            // 检查今天是否有数据
-            List<RealtimeKpi> todayData = realtimeKpiMapper.findBycityAndDate("Shanghai", today);
+            List<RealtimeKpi> todayData = realtimeKpiMapper.findByCityAndDate("Shanghai", today);
 
             if (todayData.isEmpty()) {
                 return "⚠️ 今日暂无数据";
@@ -86,6 +115,20 @@ public class KpiService {
     }
 
     /**
+     * 清理旧数据
+     */
+    public int cleanupOldData(LocalDate cutoffDate) {
+        return realtimeKpiMapper.cleanupOldKpi(cutoffDate);
+    }
+
+    /**
+     * 统计记录数
+     */
+    public int countByCity(String city) {
+        return realtimeKpiMapper.countByCity(city);
+    }
+
+    /**
      * 实体转DTO
      */
     private KpiDataDTO convertToDTO(RealtimeKpi kpi) {
@@ -95,15 +138,10 @@ public class KpiService {
         dto.setHour(kpi.getHour());
         dto.setTotalOrders(kpi.getTotalOrders());
         dto.setActiveCouriers(kpi.getActiveCouriers());
+        dto.setCoverageAois(kpi.getCoverageAois());
+        dto.setOrdersPerCourier(kpi.getOrdersPerCourier());
+        dto.setOrdersPerAoi(kpi.getOrdersPerAoi());
         dto.setEfficiencyScore(kpi.getEfficiencyScore());
-
-        // 计算快速配送率（这里简化处理）
-        if (kpi.getTotalOrders() != null && kpi.getTotalOrders() > 0) {
-            // 假设70%的订单是快速配送
-            dto.setFastDeliveryRate(kpi.getEfficiencyScore().multiply(java.math.BigDecimal.valueOf(0.7)));
-        }
-
         return dto;
     }
-
 }

@@ -59,18 +59,6 @@
         </where>
     </sql>
 
-    <!-- 插入异常告警 -->
-    <insert id="insertAlert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO anomaly_alerts (
-            anomaly_type, city, order_id, courier_id, anomaly_severity,
-            anomaly_value, threshold_value, description, original_time,
-            analysis_date, analysis_hour, is_resolved
-        ) VALUES (
-                     #{anomalyType}, #{city}, #{orderId}, #{courierId}, #{anomalySeverity},
-                     #{anomalyValue}, #{thresholdValue}, #{description}, #{originalTime},
-                     #{analysisDate}, #{analysisHour}, #{isResolved}
-                 )
-    </insert>
 
     <!-- 根据ID查找告警 -->
     <select id="findById" resultMap="AnomalyAlertResultMap">

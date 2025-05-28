@@ -29,25 +29,6 @@ public class AnomalyAlertService {
     // ==================== 基础CRUD操作 ====================
 
     /**
-     * 插入异常告警
-     */
-    @Transactional
-    public boolean insertAlert(AnomalyAlert alert) {
-        try {
-            int result = anomalyAlertMapper.insertAlert(alert);
-            if (result > 0) {
-                clearAlertsCache();
-                log.info("✅ 成功插入告警，ID={}", alert.getId());
-                return true;
-            }
-            return false;
-        } catch (Exception e) {
-            log.error("插入告警失败", e);
-            return false;
-        }
-    }
-
-    /**
      * 根据ID获取告警
      */
     public AnomalyAlertDTO getAlertById(Long id) {

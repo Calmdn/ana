@@ -57,12 +57,6 @@ public class CostAnalysisMetricsService {
         return costAnalysisMetricsMapper.findByRegionAndDateRange(regionId, startDate, endDate);
     }
 
-    /**
-     * 根据分析类型查询成本分析
-     */
-    public List<CostAnalysisMetrics> getCostAnalysisByType(String analysisType, LocalDate startDate) {
-        return costAnalysisMetricsMapper.findByAnalysisType(analysisType, startDate);
-    }
 
     /**
      * 多条件查询成本分析

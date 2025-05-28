@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.logistics.service.dao.mapper.SparkJobLogsMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="SparkJobLogsResultMap" type="com.logistics.service.dao.entity.SparkJobLogs">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="job_name" property="jobName" jdbcType="VARCHAR"/>
+        <result column="start_time" property="startTime" jdbcType="TIMESTAMP"/>
+        <result column="end_time" property="endTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="input_deliver_path" property="inputDeliverPath" jdbcType="VARCHAR"/>
+        <result column="input_pickup_path" property="inputPickupPath" jdbcType="VARCHAR"/>
+        <result column="output_path" property="outputPath" jdbcType="VARCHAR"/>
+        <result column="processed_records" property="processedRecords" jdbcType="BIGINT"/>
+        <result column="error_message" property="errorMessage" jdbcType="LONGVARCHAR"/>
+        <result column="execution_time_seconds" property="executionTimeSeconds" jdbcType="INTEGER"/>
+        <result column="time_format_used" property="timeFormatUsed" jdbcType="VARCHAR"/>
+        <result column="default_year" property="defaultYear" jdbcType="INTEGER"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础列定义 -->
+    <sql id="Base_Column_List">
+        id, job_name, start_time, end_time, status, input_deliver_path, input_pickup_path,
+        output_path, processed_records, error_message, execution_time_seconds,
+        time_format_used, default_year, created_at
+    </sql>
+
+    <!-- 插入作业日志 -->
+    <insert id="insertJob" parameterType="com.logistics.service.dao.entity.SparkJobLogs" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO spark_job_logs
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="jobName != null">job_name,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="status != null">status,</if>
+            <if test="inputDeliverPath != null">input_deliver_path,</if>
+            <if test="inputPickupPath != null">input_pickup_path,</if>
+            <if test="outputPath != null">output_path,</if>
+            <if test="processedRecords != null">processed_records,</if>
+            <if test="errorMessage != null">error_message,</if>
+            <if test="executionTimeSeconds != null">execution_time_seconds,</if>
+            <if test="timeFormatUsed != null">time_format_used,</if>
+            <if test="defaultYear != null">default_year,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="jobName != null">#{jobName,jdbcType=VARCHAR},</if>
+            <if test="startTime != null">#{startTime,jdbcType=TIMESTAMP},</if>
+            <if test="endTime != null">#{endTime,jdbcType=TIMESTAMP},</if>
+            <if test="status != null">#{status,jdbcType=VARCHAR},</if>
+            <if test="inputDeliverPath != null">#{inputDeliverPath,jdbcType=VARCHAR},</if>
+            <if test="inputPickupPath != null">#{inputPickupPath,jdbcType=VARCHAR},</if>
+            <if test="outputPath != null">#{outputPath,jdbcType=VARCHAR},</if>
+            <if test="processedRecords != null">#{processedRecords,jdbcType=BIGINT},</if>
+            <if test="errorMessage != null">#{errorMessage,jdbcType=LONGVARCHAR},</if>
+            <if test="executionTimeSeconds != null">#{executionTimeSeconds,jdbcType=INTEGER},</if>
+            <if test="timeFormatUsed != null">#{timeFormatUsed,jdbcType=VARCHAR},</if>
+            <if test="defaultYear != null">#{defaultYear,jdbcType=INTEGER},</if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入作业日志 -->
+    <insert id="batchInsertJobs" parameterType="java.util.List">
+        INSERT INTO spark_job_logs (
+        job_name, start_time, end_time, status, input_deliver_path, input_pickup_path,
+        output_path, processed_records, error_message, execution_time_seconds,
+        time_format_used, default_year
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.jobName,jdbcType=VARCHAR},
+            #{item.startTime,jdbcType=TIMESTAMP},
+            #{item.endTime,jdbcType=TIMESTAMP},
+            #{item.status,jdbcType=VARCHAR},
+            #{item.inputDeliverPath,jdbcType=VARCHAR},
+            #{item.inputPickupPath,jdbcType=VARCHAR},
+            #{item.outputPath,jdbcType=VARCHAR},
+            #{item.processedRecords,jdbcType=BIGINT},
+            #{item.errorMessage,jdbcType=LONGVARCHAR},
+            #{item.executionTimeSeconds,jdbcType=INTEGER},
+            #{item.timeFormatUsed,jdbcType=VARCHAR},
+            #{item.defaultYear,jdbcType=INTEGER}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据ID查找作业 -->
+    <select id="findById" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <!-- 查找最近的作业 -->
+    <select id="findRecentJobs" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        ORDER BY created_at DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据状态查找作业 -->
+    <select id="findByStatus" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE status = #{status,jdbcType=VARCHAR}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据作业名称查找 -->
+    <select id="findByJobName" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE job_name = #{jobName,jdbcType=VARCHAR}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 查找成功的作业 -->
+    <select id="findSuccessfulJobs" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE status = 'SUCCESS'
+        ORDER BY created_at DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据时间范围查找作业 -->
+    <select id="findByTimeRange" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE start_time >= #{startTime,jdbcType=TIMESTAMP}
+        AND start_time &lt;= #{endTime,jdbcType=TIMESTAMP}
+        ORDER BY start_time DESC
+    </select>
+
+    <!-- 查找长时间运行的作业 -->
+    <select id="findLongRunningJobs" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE execution_time_seconds > #{thresholdSeconds,jdbcType=INTEGER}
+        ORDER BY execution_time_seconds DESC
+    </select>
+
+    <!-- 更新作业状态 -->
+    <update id="updateJobStatus">
+        UPDATE spark_job_logs
+        <set>
+            <if test="status != null">status = #{status,jdbcType=VARCHAR},</if>
+            <if test="endTime != null">end_time = #{endTime,jdbcType=TIMESTAMP},</if>
+            <if test="executionTimeSeconds != null">execution_time_seconds = #{executionTimeSeconds,jdbcType=INTEGER},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage,jdbcType=LONGVARCHAR},</if>
+        </set>
+        WHERE id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <!-- 更新作业处理记录数 -->
+    <update id="updateProcessedRecords">
+        UPDATE spark_job_logs
+        SET processed_records = #{processedRecords,jdbcType=BIGINT}
+        WHERE id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <!-- 获取作业执行趋势 -->
+    <select id="getJobExecutionTrend" resultType="java.util.Map">
+        SELECT
+            DATE(start_time) as job_date,
+            status,
+            COUNT(*) as count
+        FROM spark_job_logs
+        WHERE start_time >= #{startTime,jdbcType=TIMESTAMP}
+        GROUP BY DATE(start_time), status
+        ORDER BY job_date DESC
+    </select>
+
+
+    <!-- 统计作业数量 -->
+    <select id="countJobsByStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM spark_job_logs
+        WHERE status = #{status,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 统计总作业数 -->
+    <select id="countTotalJobs" resultType="int">
+        SELECT COUNT(*)
+        FROM spark_job_logs
+    </select>
+
+    <!-- 获取平均执行时间 -->
+    <select id="getAverageExecutionTime" resultType="java.lang.Double">
+        SELECT AVG(execution_time_seconds)
+        FROM spark_job_logs
+        WHERE status = 'SUCCESS' AND execution_time_seconds IS NOT NULL
+    </select>
+
+    <!-- 获取总处理记录数 -->
+    <select id="getTotalProcessedRecords" resultType="java.lang.Long">
+        SELECT SUM(processed_records)
+        FROM spark_job_logs
+        WHERE processed_records IS NOT NULL
+    </select>
+
+    <!-- 清理旧的作业日志 -->
+    <delete id="cleanupOldJobs">
+        DELETE FROM spark_job_logs
+        WHERE created_at &lt; #{cutoffTime,jdbcType=TIMESTAMP}
+    </delete>
+
+    <!-- 查找有错误信息的作业 -->
+    <select id="findJobsWithErrors" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE error_message IS NOT NULL AND error_message != ''
+        ORDER BY created_at DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 查找超过指定处理记录数的作业 -->
+    <select id="findJobsWithHighRecordCount" resultMap="SparkJobLogsResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM spark_job_logs
+        WHERE processed_records > #{threshold,jdbcType=BIGINT}
+        ORDER BY processed_records DESC
+        <if test="limit != null and limit > 0">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+</mapper>
