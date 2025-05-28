@@ -55,7 +55,7 @@ public class RedisConfig {
                 new GenericJackson2JsonRedisSerializer(objectMapper);
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(15))  // 默认缓存30分钟
+                .entryTtl(Duration.ofMinutes(15))  // 默认缓存15分钟
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
                 .disableCachingNullValues();  // 不缓存null值

@@ -60,52 +60,13 @@ logistics:
     output:
       base-path: /user/calmdn/lade/results/enhanced-analysis
 
-# Redis监控配置
-redis:
-  monitoring:
-    enabled: true  # 启用Redis监控
-    log-dir: "logs/redis"  # 目录
-
-    # 监控范围
-    included-packages:
-      - "com.logistics.service"
-
-    excluded-packages:
-      - "com.logistics.test"
-      - "com.logistics.config"
-
-    # 缓存监控配置
-    included-caches:
-      - "time_efficiency"  # 您TimeEfficiencyService中使用的缓存
-      - "stats"
-      - "spatial"
-      - "jobs"
-      - "predictions"
-      - "efficiency"
-      - "kpi"
-      - "costs"
-      - "reports"
-      - "alerts"
-
-    excluded-caches: []
-
-    # 性能过滤配置
-    min-duration-ms: 2  # 只记录超过2ms的操作
-    log-cache-hits: true  # 记录缓存命中
-    log-cache-misses: true  # 记录缓存未命中
-
-    # 日志文件管理
-    max-log-files: 30  # 保留30天的日志文件
-
-    # 监控详细程度
-    detail-level: "STANDARD"  # BASIC, STANDARD, DETAILED
-
-
 # 日志配置
 logging:
   level:
+    root: WARN
     com.logistics.service: INFO
+    com.logistics.service.monitoring: INFO  # 监控日志
     org.apache.spark: WARN
-    com.logistics.monitoring: INFO
+    org.springframework: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
