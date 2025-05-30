@@ -36,3 +36,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# IntelliJ IDEA 配置文件夹
+.idea/
+
+# Maven 配置文件夹
+.mvn/
+src/
