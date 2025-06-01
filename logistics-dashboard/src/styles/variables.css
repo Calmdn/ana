@@ -1,0 +1,278 @@
+/* CSS 自定义属性 (CSS Variables) */
+:root {
+  /* ========== 颜色系统 ========== */
+  
+  /* 主色调 */
+  --primary-color: #409EFF;
+  --primary-light: #66B1FF;
+  --primary-lighter: #B3D8FF;
+  --primary-extra-light: #E6F5FF;
+  --primary-dark: #3A8EE6;
+  --primary-darker: #337ECC;
+  
+  /* 成功色 */
+  --success-color: #67C23A;
+  --success-light: #85CE61;
+  --success-lighter: #B3E19D;
+  --success-extra-light: #E1F3D8;
+  --success-dark: #5DAE34;
+  --success-darker: #529B2E;
+  
+  /* 警告色 */
+  --warning-color: #E6A23C;
+  --warning-light: #ELBF63;
+  --warning-lighter: #F5DAB1;
+  --warning-extra-light: #FCF6E8;
+  --warning-dark: #CF9236;
+  --warning-darker: #B88230;
+  
+  /* 危险色 */
+  --danger-color: #F56C6C;
+  --danger-light: #F78989;
+  --danger-lighter: #FAB6B6;
+  --danger-extra-light: #FDE2E2;
+  --danger-dark: #DD6161;
+  --danger-darker: #C45656;
+  
+  /* 信息色 */
+  --info-color: #909399;
+  --info-light: #A6A9AD;
+  --info-lighter: #C8C9CC;
+  --info-extra-light: #F4F4F5;
+  --info-dark: #82848A;
+  --info-darker: #73767A;
+  
+  /* 文本颜色 */
+  --text-color-primary: #303133;
+  --text-color-regular: #606266;
+  --text-color-secondary: #909399;
+  --text-color-placeholder: #C0C4CC;
+  --text-color-disabled: #C0C4CC;
+  
+  /* 边框颜色 */
+  --border-color-base: #DCDFE6;
+  --border-color-light: #E4E7ED;
+  --border-color-lighter: #EBEEF5;
+  --border-color-extra-light: #F2F6FC;
+  --border-color-dark: #D4D7DE;
+  --border-color-darker: #CDD0D6;
+  
+  /* 背景颜色 */
+  --bg-color: #FFFFFF;
+  --bg-color-page: #F2F3F5;
+  --bg-color-light: #FCFCFC;
+  --bg-color-lighter: #FAFAFA;
+  --bg-color-extra-light: #F5F7FA;
+  --bg-color-dark: #F0F2F5;
+  --bg-color-darker: #E4E7ED;
+  
+  /* 遮罩颜色 */
+  --mask-color: rgba(255, 255, 255, 0.9);
+  --mask-color-light: rgba(255, 255, 255, 0.3);
+  --overlay-color: rgba(0, 0, 0, 0.8);
+  --overlay-color-light: rgba(0, 0, 0, 0.3);
+  
+  /* ========== 字体系统 ========== */
+  
+  /* 字体族 */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-family-mono: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  
+  /* 字体大小 */
+  --font-size-extra-large: 20px;
+  --font-size-large: 18px;
+  --font-size-medium: 16px;
+  --font-size-base: 14px;
+  --font-size-small: 13px;
+  --font-size-extra-small: 12px;
+  
+  /* 字体粗细 */
+  --font-weight-primary: 500;
+  --font-weight-secondary: 100;
+  --font-weight-bold: 700;
+  --font-weight-bolder: 900;
+  
+  /* 行高 */
+  --line-height-primary: 1.5;
+  --line-height-secondary: 1.2;
+  
+  /* ========== 尺寸系统 ========== */
+  
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-xxl: 24px;
+  --spacing-xxxl: 32px;
+  
+  /* 圆角 */
+  --border-radius-base: 4px;
+  --border-radius-small: 2px;
+  --border-radius-round: 20px;
+  --border-radius-circle: 50%;
+  
+  /* 边框宽度 */
+  --border-width-base: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 3px;
+  
+  /* 组件高度 */
+  --component-size-large: 40px;
+  --component-size-medium: 36px;
+  --component-size-base: 32px;
+  --component-size-small: 28px;
+  --component-size-mini: 24px;
+  
+  /* ========== 层级系统 ========== */
+  
+  --z-index-normal: 1;
+  --z-index-top: 1000;
+  --z-index-popper: 2000;
+  --z-index-message: 3000;
+  --z-index-message-box: 4000;
+  
+  /* ========== 动效系统 ========== */
+  
+  /* 过渡时间 */
+  --transition-duration-fast: 0.15s;
+  --transition-duration-base: 0.3s;
+  --transition-duration-slow: 0.5s;
+  
+  /* 缓动函数 */
+  --transition-function-ease-in-out-bezier: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --transition-function-fast-bezier: cubic-bezier(0.23, 1, 0.32, 1);
+  
+  /* 通用过渡 */
+  --transition-all: all var(--transition-duration-base) var(--transition-function-ease-in-out-bezier);
+  --transition-fade: opacity var(--transition-duration-base) var(--transition-function-fast-bezier);
+  --transition-md-fade: transform var(--transition-duration-base) var(--transition-function-fast-bezier), opacity var(--transition-duration-base) var(--transition-function-fast-bezier);
+  
+  /* ========== 阴影系统 ========== */
+  
+  --box-shadow-base: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+  --box-shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  --box-shadow-lighter: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
+  --box-shadow-dark: 0 4px 16px rgba(0, 0, 0, 0.12);
+  
+  /* ========== 图表颜色系统 ========== */
+  
+  /* 图表主色调 */
+  --chart-color-1: #5470C6;
+  --chart-color-2: #91CC75;
+  --chart-color-3: #FAC858;
+  --chart-color-4: #EE6666;
+  --chart-color-5: #73C0DE;
+  --chart-color-6: #3BA272;
+  --chart-color-7: #FC8452;
+  --chart-color-8: #9A60B4;
+  --chart-color-9: #EA7CCC;
+  --chart-color-10: #87C6F7;
+  
+  /* 图表辅助色 */
+  --chart-bg-color: #FFFFFF;
+  --chart-text-color: var(--text-color-regular);
+  --chart-axis-color: var(--border-color-base);
+  --chart-grid-color: var(--border-color-lighter);
+  
+  /* 热力图颜色 */
+  --heatmap-color-1: #313695;
+  --heatmap-color-2: #4575b4;
+  --heatmap-color-3: #74add1;
+  --heatmap-color-4: #abd9e9;
+  --heatmap-color-5: #e0f3f8;
+  --heatmap-color-6: #ffffcc;
+  --heatmap-color-7: #fee090;
+  --heatmap-color-8: #fdae61;
+  --heatmap-color-9: #f46d43;
+  --heatmap-color-10: #d73027;
+  --heatmap-color-11: #a50026;
+  
+  /* ========== 布局系统 ========== */
+  
+  /* 容器宽度 */
+  --container-max-width: 1200px;
+  --container-padding: var(--spacing-lg);
+  
+  /* 头部高度 */
+  --header-height: 60px;
+  
+  /* 侧边栏宽度 */
+  --sidebar-width: 200px;
+  --sidebar-collapsed-width: 64px;
+  
+  /* 页脚高度 */
+  --footer-height: 60px;
+  
+  /* ========== 响应式断点 ========== */
+  
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1600px;
+  
+  /* ========== 深色模式 ========== */
+}
+
+/* 深色模式变量 */
+[data-theme="dark"] {
+  /* 文本颜色 */
+  --text-color-primary: #E5EAF3;
+  --text-color-regular: #CFD3DC;
+  --text-color-secondary: #A3A6AD;
+  --text-color-placeholder: #8D9095;
+  --text-color-disabled: #6C6E72;
+  
+  /* 边框颜色 */
+  --border-color-base: #4C4D4F;
+  --border-color-light: #414243;
+  --border-color-lighter: #363637;
+  --border-color-extra-light: #2B2B2C;
+  --border-color-dark: #58585B;
+  --border-color-darker: #636466;
+  
+  /* 背景颜色 */
+  --bg-color: #1D1E1F;
+  --bg-color-page: #0A0A0A;
+  --bg-color-light: #262727;
+  --bg-color-lighter: #1D1E1F;
+  --bg-color-extra-light: #191A1B;
+  --bg-color-dark: #151516;
+  --bg-color-darker: #0D0D0E;
+  
+  /* 遮罩颜色 */
+  --mask-color: rgba(0, 0, 0, 0.8);
+  --mask-color-light: rgba(0, 0, 0, 0.3);
+  --overlay-color: rgba(255, 255, 255, 0.8);
+  --overlay-color-light: rgba(255, 255, 255, 0.3);
+  
+  /* 图表颜色 */
+  --chart-bg-color: var(--bg-color);
+  --chart-text-color: var(--text-color-regular);
+  --chart-axis-color: var(--border-color-base);
+  --chart-grid-color: var(--border-color-lighter);
+}
+
+/* 高对比度模式 */
+[data-theme="high-contrast"] {
+  --primary-color: #0078D4;
+  --success-color: #107C10;
+  --warning-color: #F7630C;
+  --danger-color: #D13438;
+  --text-color-primary: #000000;
+  --bg-color: #FFFFFF;
+  --border-color-base: #000000;
+}
+
+/* 打印样式变量 */
+@media print {
+  :root {
+    --text-color-primary: #000000;
+    --text-color-regular: #333333;
+    --bg-color: #FFFFFF;
+    --border-color-base: #000000;
+  }
+}

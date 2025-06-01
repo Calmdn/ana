@@ -1,0 +1,82 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+#app {
+  height: 100%;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Element Plus 组件样式覆盖 */
+.el-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.el-card__header {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 15px 20px;
+}
+
+.el-card__body {
+  padding: 20px;
+}
+
+/* 工具类 */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mr-10 {
+  margin-right: 10px;
+}
+
+.status-success {
+  color: #67C23A;
+}
+
+.status-warning {
+  color: #E6A23C;
+}
+
+.status-danger {
+  color: #F56C6C;
+}
+
+.status-info {
+  color: #909399;
+}

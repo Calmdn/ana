@@ -1,0 +1,36 @@
+{
+  "name": "logistics-dashboard",
+  "version": "1.0.0",
+  "description": "物流大数据可视化平台",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node server.js",
+    "build-exe": "npm run build && pkg server.js --target node18-win-x64 --output logistics-server.exe",
+    "pkg": "pkg server.js --target node18-win-x64 --output logistics-server.exe"
+  },
+  "pkg": {
+    "assets": [
+      "dist/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ]
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "axios": "^1.5.0",
+    "dayjs": "^1.11.9",
+    "echarts": "^5.4.3",
+    "element-plus": "^2.9.11",
+    "express": "^4.18.2",
+    "pinia": "^2.1.6",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.3.4",
+    "pkg": "^5.8.1",
+    "vite": "^4.4.9"
+  }
+}
