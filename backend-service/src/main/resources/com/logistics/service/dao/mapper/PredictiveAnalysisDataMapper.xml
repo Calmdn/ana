@@ -281,11 +281,6 @@
         </if>
     </update>
 
-    <!-- 删除旧的预测分析数据 -->
-    <delete id="cleanupOldPredictions">
-        DELETE FROM predictive_analysis_data
-        WHERE ds_date &lt; #{cutoffDate,jdbcType=DATE}
-    </delete>
 
     <!-- 统计预测分析记录数 -->
     <select id="countByCityAndType" resultType="int">

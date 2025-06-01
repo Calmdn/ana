@@ -236,11 +236,11 @@
     <select id="getEfficiencyDistribution" resultType="java.util.Map">
         SELECT
         CASE
-        WHEN efficiency_score >= 90 THEN 'excellent'
-        WHEN efficiency_score >= 80 THEN 'good'
-        WHEN efficiency_score >= 70 THEN 'average'
-        WHEN efficiency_score >= 60 THEN 'below_average'
-        ELSE 'poor'
+        WHEN efficiency_score >= 1.2 THEN '高效'
+        WHEN efficiency_score >= 1.0 THEN '正常'
+        WHEN efficiency_score >= 0.8 THEN '普通'
+        WHEN efficiency_score >= 0.5 THEN '低效'
+        ELSE '待改进'
         END as efficiency_level,
         COUNT(*) as count,
         ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM operational_efficiency_metrics

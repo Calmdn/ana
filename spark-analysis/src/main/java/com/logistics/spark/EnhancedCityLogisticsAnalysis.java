@@ -498,9 +498,10 @@ public class EnhancedCityLogisticsAnalysis {
      */
     private static void generatePredictiveAnalysisData(Dataset<Row> delivery, Dataset<Row> pickup, String outputPath, SparkSession spark) {
         try {
-            // 时间序列趋势数据 - 基于ds字段进行时间序列分析
+            // 修正时间转换 - 添加年份
             Dataset<Row> timeSeriesTrends = delivery
-                    .withColumn("ds_date", to_date(col("ds"), "MMdd")) // ds格式为518 -> 5/18
+                    .withColumn("ds_date",
+                            to_date(concat(lit("2025"), col("ds")), "yyyyMMdd")) // 518 -> 20250518
                     .groupBy("city", "ds_date", "hour")
                     .agg(
                             count("order_id").alias("order_volume"),
@@ -509,9 +510,7 @@ public class EnhancedCityLogisticsAnalysis {
                             sum("delivery_distance_km").alias("total_distance")
                     )
                     .withColumn("volume_trend", lag("order_volume", 1).over(
-                            Window.partitionBy("city").orderBy(
-                                    unix_timestamp(col("ds_date")).plus(col("hour").multiply(3600))
-                            )))
+                            Window.partitionBy("city").orderBy("ds_date", "hour")))
                     .withColumn("efficiency_score",
                             col("order_volume").divide(col("courier_count").multiply(col("avg_duration"))))
                     .withColumn("data_type", lit("HOURLY"))
