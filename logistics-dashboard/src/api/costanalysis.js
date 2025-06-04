@@ -188,7 +188,7 @@ export const CostAnalysisTypes = {
   }
 }
 
-// 常用的查询参数预设
+// 常用查询参数预设
 export const CostAnalysisPresets = {
   // 常用分析类型
   ANALYSIS_TYPES: {

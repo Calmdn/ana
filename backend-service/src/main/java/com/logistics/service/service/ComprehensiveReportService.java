@@ -41,11 +41,11 @@ public class ComprehensiveReportService {
             if (existing != null) {
                 // 存在则更新
                 result = comprehensiveReportMapper.updateReport(report);
-                log.info("✅ 更新报告成功，城市: {}, 日期: {}，已清除缓存", report.getCity(), report.getDate());
+                log.info("更新报告成功，城市: {}, 日期: {}，已清除缓存", report.getCity(), report.getDate());
             } else {
                 // 不存在则插入
                 result = comprehensiveReportMapper.insertReport(report);
-                log.info("✅ 插入报告成功，城市: {}, 日期: {}，已清除缓存", report.getCity(), report.getDate());
+                log.info(" 插入报告成功，城市: {}, 日期: {}，已清除缓存", report.getCity(), report.getDate());
             }
 
             return result > 0;
@@ -62,7 +62,7 @@ public class ComprehensiveReportService {
             unless = "#result == null")
     public ComprehensiveReportDTO getReportByCityDateAndType(String city, LocalDate date, String reportType) {
         try {
-            log.info("🔍 查询数据库获取特定报告[city={}, date={}, type={}]", city, date, reportType);
+            log.info("  查询数据库获取特定报告[city={}, date={}, type={}]", city, date, reportType);
             ComprehensiveReport report = comprehensiveReportMapper.findByCityDateAndType(city, date, reportType);
             return report != null ? convertToDTO(report) : null;
         } catch (Exception e) {
@@ -82,7 +82,7 @@ public class ComprehensiveReportService {
             int result = comprehensiveReportMapper.updateReport(report);
 
             if (result > 0) {
-                log.info("✅ 更新报告成功，已清除缓存");
+                log.info(" 更新报告成功，已清除缓存");
                 return true;
             }
             return false;
@@ -103,7 +103,7 @@ public class ComprehensiveReportService {
     public List<ComprehensiveReportDTO> getReportsByCity(String city, String reportType,
                                                          LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取综合报告[city={}, type={}]", city, reportType);
+            log.info("  查询数据库获取综合报告[city={}, type={}]", city, reportType);
             List<ComprehensiveReport> reports = comprehensiveReportMapper.findByCityAndTypeAndDateRange(
                     city, reportType, startDate, endDate);
             return reports.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -120,7 +120,7 @@ public class ComprehensiveReportService {
             unless = "#result.isEmpty()")
     public List<ComprehensiveReportDTO> getReportsByDateRange(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取日期范围报告[city={}]", city);
+            log.info("  查询数据库获取日期范围报告[city={}]", city);
             List<ComprehensiveReport> reports = comprehensiveReportMapper.findByCityAndDateRange(city, startDate, endDate);
             return reports.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -148,7 +148,7 @@ public class ComprehensiveReportService {
     @Cacheable(value = "reports", key = "'daily:latest:' + #city", unless = "#result.isEmpty()")
     public List<ComprehensiveReportDTO> getLatestDailyReports(String city) {
         try {
-            log.info("🔍 查询数据库获取最新日报[city={}]", city);
+            log.info("  查询数据库获取最新日报[city={}]", city);
             List<ComprehensiveReport> reports = comprehensiveReportMapper.findLatestDailyReports(city, 10);
             return reports.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -163,7 +163,7 @@ public class ComprehensiveReportService {
     @Cacheable(value = "reports", key = "'weekly:latest:' + #city", unless = "#result.isEmpty()")
     public List<ComprehensiveReportDTO> getLatestWeeklyReports(String city) {
         try {
-            log.info("🔍 查询数据库获取最新周报[city={}]", city);
+            log.info("  查询数据库获取最新周报[city={}]", city);
             List<ComprehensiveReport> reports = comprehensiveReportMapper.findLatestWeeklyReports(city, 8);
             return reports.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -178,7 +178,7 @@ public class ComprehensiveReportService {
     @Cacheable(value = "reports", key = "'latest:' + #city", unless = "#result == null")
     public ComprehensiveReportDTO getLatestReportByCity(String city) {
         try {
-            log.info("🔍 查询数据库获取最新报告[city={}]", city);
+            log.info("  查询数据库获取最新报告[city={}]", city);
             ComprehensiveReport report = comprehensiveReportMapper.findLatestByCity(city);
             return report != null ? convertToDTO(report) : null;
         } catch (Exception e) {
@@ -193,7 +193,7 @@ public class ComprehensiveReportService {
     @Cacheable(value = "stats", key = "'cities:all'", unless = "#result.isEmpty()")
     public List<String> getAllCities() {
         try {
-            log.info("🔍 查询数据库获取城市列表");
+            log.info("  查询数据库获取城市列表");
             return comprehensiveReportMapper.findAllCities();
         } catch (Exception e) {
             log.error("获取城市列表失败", e);
@@ -222,7 +222,7 @@ public class ComprehensiveReportService {
     @Cacheable(value = "stats", key = "'trend:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityReportTrend(String city, LocalDate startDate) {
         try {
-            log.info("🔍 查询数据库获取报告趋势[city={}]", city);
+            log.info("  查询数据库获取报告趋势[city={}]", city);
             return comprehensiveReportMapper.getCityReportTrend(city, startDate);
         } catch (Exception e) {
             log.error("获取报告趋势失败", e);
@@ -237,7 +237,7 @@ public class ComprehensiveReportService {
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityEfficiencyRanking(LocalDate startDate, int limit) {
         try {
-            log.info("🔍 查询数据库获取效率排行");
+            log.info("  查询数据库获取效率排行");
             return comprehensiveReportMapper.getCityEfficiencyRanking(startDate, limit);
         } catch (Exception e) {
             log.error("获取效率排行失败", e);
@@ -265,7 +265,7 @@ public class ComprehensiveReportService {
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getDeliveryEfficiencyStats(LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取配送效率统计");
+            log.info("  查询数据库获取配送效率统计");
             return comprehensiveReportMapper.getDeliveryEfficiencyStats(startDate, endDate);
         } catch (Exception e) {
             log.error("获取配送效率统计失败", e);
@@ -298,7 +298,7 @@ public class ComprehensiveReportService {
             int deleted = comprehensiveReportMapper.cleanupOldReports(cutoffDate);
 
             if (deleted > 0) {
-                log.info("✅ 清理旧报告数据成功，删除 {} 条记录，已清除缓存", deleted);
+                log.info(" 清理旧报告数据成功，删除 {} 条记录，已清除缓存", deleted);
             }
 
             return deleted;

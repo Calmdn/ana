@@ -28,7 +28,7 @@ public class KpiService {
     public List<KpiDataDTO> getTodayKpiByCity(String city) {
         try {
             LocalDate today = LocalDate.now();
-            log.info("🔍 查询数据库获取今日KPI[city={}, date={}]", city, today);
+            log.info("  查询数据库获取今日KPI[city={}, date={}]", city, today);
 
             List<RealtimeKpi> kpiList = realtimeKpiMapper.findByCityAndDate(city, today);
             return kpiList.stream()
@@ -46,7 +46,7 @@ public class KpiService {
     @Cacheable(value = "kpi", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<KpiDataDTO> getKpiByDate(String city, LocalDate date) {
         try {
-            log.info("🔍 查询数据库获取KPI[city={}, date={}]", city, date);
+            log.info("  查询数据库获取KPI[city={}, date={}]", city, date);
             List<RealtimeKpi> kpiList = realtimeKpiMapper.findByCityAndDate(city, date);
             return kpiList.stream()
                     .map(this::convertToDTO)
@@ -63,7 +63,7 @@ public class KpiService {
     @Cacheable(value = "kpi", key = "'recent:' + #city + ':' + #days", unless = "#result.isEmpty()")
     public List<KpiDataDTO> getRecentKpi(String city, int days) {
         try {
-            log.info("🔍 查询数据库获取最近KPI[city={}, days={}]", city, days);
+            log.info("  查询数据库获取最近KPI[city={}, days={}]", city, days);
             List<RealtimeKpi> kpiList = realtimeKpiMapper.findRecentKpiByCity(city, days);
             return kpiList.stream()
                     .map(this::convertToDTO)
@@ -81,18 +81,18 @@ public class KpiService {
     public String getSystemHealth() {
         try {
             LocalDate today = LocalDate.now();
-            log.info("🔍 查询数据库检查系统健康状态");
+            log.info("  查询数据库检查系统健康状态");
             List<RealtimeKpi> todayData = realtimeKpiMapper.findByCityAndDate("Shanghai", today);
 
             if (todayData.isEmpty()) {
-                return "⚠️ 今日暂无数据";
+                return "️今日暂无数据";
             }
 
-            return "✅ 系统运行正常，共有 " + todayData.size() + " 条记录";
+            return "系统运行正常，共有 " + todayData.size() + " 条记录";
 
         } catch (Exception e) {
             log.error("健康检查失败: {}", e.getMessage());
-            return "❌ 系统异常: " + e.getMessage();
+            return "系统异常: " + e.getMessage();
         }
     }
 
@@ -104,7 +104,7 @@ public class KpiService {
     public int cleanupOldData(LocalDate cutoffDate) {
         int result = realtimeKpiMapper.cleanupOldKpi(cutoffDate);
         if (result > 0) {
-            log.info("✅ 清理旧KPI数据成功，删除 {} 条记录，已清除缓存", result);
+            log.info("清理旧KPI数据成功，删除 {} 条记录，已清除缓存", result);
         }
         return result;
     }

@@ -30,7 +30,7 @@ public class AnomalyAlertService {
     @Cacheable(value = "alerts", key = "'alert:' + #id", unless = "#result == null")
     public AnomalyAlertDTO getAlertById(Long id) {
         try {
-            log.info("🔍 查询数据库获取告警[id={}]", id);
+            log.info("查询数据库获取告警[id={}]", id);
             AnomalyAlert alert = anomalyAlertMapper.findById(id);
             return alert != null ? convertToDTO(alert) : null;
         } catch (Exception e) {
@@ -47,7 +47,7 @@ public class AnomalyAlertService {
     @Cacheable(value = "alerts", key = "'unresolved:' + #city", unless = "#result.isEmpty()")
     public List<AnomalyAlertDTO> getUnresolvedAlertsByCity(String city) {
         try {
-            log.info("🔍 查询数据库获取未解决告警[city={}]", city);
+            log.info("查询数据库获取未解决告警[city={}]", city);
             List<AnomalyAlert> alerts = anomalyAlertMapper.findAlerts(
                     city, null, null, null, null, null, null, false, null);
             return alerts.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -63,7 +63,7 @@ public class AnomalyAlertService {
     @Cacheable(value = "alerts", key = "'severity:' + #severity", unless = "#result.isEmpty()")
     public List<AnomalyAlertDTO> getAlertsBySeverity(String severity) {
         try {
-            log.info("🔍 查询数据库获取严重程度告警[severity={}]", severity);
+            log.info("查询数据库获取严重程度告警[severity={}]", severity);
             List<AnomalyAlert> alerts = anomalyAlertMapper.findAlerts(
                     null, null, severity, null, null, null, null, null, null);
             return alerts.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -94,7 +94,7 @@ public class AnomalyAlertService {
             unless = "#result.isEmpty()")
     public List<AnomalyAlertDTO> getAlertsByDateRange(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取时间范围告警[city={}]", city);
+            log.info("查询数据库获取时间范围告警[city={}]", city);
             List<AnomalyAlert> alerts = anomalyAlertMapper.findAlerts(
                     city, null, null, null, null, startDate, endDate, null, null);
             return alerts.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -163,7 +163,7 @@ public class AnomalyAlertService {
     @Cacheable(value = "alerts", key = "'highest_deviation:' + #limit", unless = "#result.isEmpty()")
     public List<AnomalyAlertDTO> getHighestDeviationAlerts(int limit) {
         try {
-            log.info("🔍 查询数据库获取最高偏差告警");
+            log.info("查询数据库获取最高偏差告警");
             List<AnomalyAlert> alerts = anomalyAlertMapper.findHighestDeviationAlerts(limit);
             return alerts.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -178,7 +178,7 @@ public class AnomalyAlertService {
     @Cacheable(value = "alerts", key = "'recent:' + #limit", unless = "#result.isEmpty()")
     public List<AnomalyAlertDTO> getRecentAlerts(int limit) {
         try {
-            log.info("🔍 查询数据库获取最近告警");
+            log.info("查询数据库获取最近告警");
             List<AnomalyAlert> alerts = anomalyAlertMapper.findRecentAlerts(limit);
             return alerts.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -198,7 +198,7 @@ public class AnomalyAlertService {
         try {
             int updated = anomalyAlertMapper.resolveAlert(alertId, LocalDateTime.now());
             if (updated > 0) {
-                log.info("✅ 告警已解决，ID={}，已清除缓存", alertId);
+                log.info("告警已解决，ID={}，已清除缓存", alertId);
                 return true;
             }
             return false;
@@ -223,7 +223,7 @@ public class AnomalyAlertService {
             int totalResolved = anomalyAlertMapper.resolveAlertsBatch(alertIds, resolvedTime);
 
             if (totalResolved > 0) {
-                log.info("✅ 批量解决告警完成，共解决 {} 个，已清除缓存", totalResolved);
+                log.info("批量解决告警完成，共解决 {} 个，已清除缓存", totalResolved);
             }
 
             return totalResolved;
@@ -260,7 +260,7 @@ public class AnomalyAlertService {
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getAlertStats(LocalDate startDate, LocalDate endDate, String groupBy) {
         try {
-            log.info("🔍 查询数据库获取告警统计分析");
+            log.info("查询数据库获取告警统计分析");
             return anomalyAlertMapper.getAlertStats(startDate, endDate, groupBy);
         } catch (Exception e) {
             log.error("获取告警统计分析失败", e);
@@ -281,7 +281,7 @@ public class AnomalyAlertService {
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityAlertTrend(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取城市告警趋势");
+            log.info("查询数据库获取城市告警趋势");
             return anomalyAlertMapper.getCityAlertTrend(city, startDate, endDate);
         } catch (Exception e) {
             log.error("获取城市告警趋势失败", e);
@@ -339,7 +339,7 @@ public class AnomalyAlertService {
         try {
             int updated = anomalyAlertMapper.updateAlertDescription(id, description);
             if (updated > 0) {
-                log.info("✅ 更新告警描述成功，ID={}，已清除缓存", id);
+                log.info("更新告警描述成功，ID={}，已清除缓存", id);
                 return true;
             }
             return false;
@@ -358,7 +358,7 @@ public class AnomalyAlertService {
         try {
             int updated = anomalyAlertMapper.updateAlertSeverity(id, severity);
             if (updated > 0) {
-                log.info("✅ 更新告警严重程度成功，ID={}，已清除缓存", id);
+                log.info("更新告警严重程度成功，ID={}，已清除缓存", id);
                 return true;
             }
             return false;
@@ -379,7 +379,7 @@ public class AnomalyAlertService {
             int deleted = anomalyAlertMapper.cleanupOldAlerts(cutoffDate);
 
             if (deleted > 0) {
-                log.info("✅ 清理旧告警数据成功，删除 {} 条记录，已清除缓存", deleted);
+                log.info("清理旧告警数据成功，删除 {} 条记录，已清除缓存", deleted);
             }
 
             return deleted;

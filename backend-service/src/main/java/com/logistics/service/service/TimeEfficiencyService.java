@@ -37,7 +37,7 @@ public class TimeEfficiencyService {
 
         int result = timeEfficiencyMapper.insertTimeEfficiency(metrics);
         if (result > 0) {
-            log.info("✅ 保存时间效率数据成功，城市: {}，已清除缓存", metrics.getCity());
+            log.info(" 保存时间效率数据成功，城市: {}，已清除缓存", metrics.getCity());
         }
         return result;
     }
@@ -55,7 +55,7 @@ public class TimeEfficiencyService {
 
         int result = timeEfficiencyMapper.batchInsertTimeEfficiency(metricsList);
         if (result > 0) {
-            log.info("✅ 批量保存时间效率数据成功，共保存 {} 条，已清除缓存", result);
+            log.info(" 批量保存时间效率数据成功，共保存 {} 条，已清除缓存", result);
         }
         return result;
     }
@@ -71,7 +71,7 @@ public class TimeEfficiencyService {
 
         int result = timeEfficiencyMapper.updateTimeEfficiency(metrics);
         if (result > 0) {
-            log.info("✅ 更新时间效率数据成功，已清除缓存");
+            log.info(" 更新时间效率数据成功，已清除缓存");
         }
         return result;
     }
@@ -85,7 +85,7 @@ public class TimeEfficiencyService {
             unless = "#result.isEmpty()")
     public List<TimeEfficiencyDTO> getTimeEfficiencyByCity(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取时间效率[city={}]", city);
+            log.info(" 查询数据库获取时间效率[city={}]", city);
             List<TimeEfficiencyMetrics> metrics = timeEfficiencyMapper.findByCityAndDateRange(city, startDate, endDate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -100,7 +100,7 @@ public class TimeEfficiencyService {
     @Cacheable(value = "time_efficiency", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<TimeEfficiencyDTO> getTimeEfficiencyByDate(String city, LocalDate date) {
         try {
-            log.info("🔍 查询数据库获取指定日期时间效率[city={}, date={}]", city, date);
+            log.info(" 查询数据库获取指定日期时间效率[city={}, date={}]", city, date);
             List<TimeEfficiencyMetrics> metrics = timeEfficiencyMapper.findByCityAndDate(city, date);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class TimeEfficiencyService {
     public List<TimeEfficiencyDTO> getTimeEfficiencyByConditions(String city, LocalDate startDate, LocalDate endDate,
                                                                  Double minFastRate, Double maxSlowRate) {
         try {
-            log.info("🔍 查询数据库获取多条件时间效率[city={}]", city);
+            log.info(" 查询数据库获取多条件时间效率[city={}]", city);
             List<TimeEfficiencyMetrics> metrics = timeEfficiencyMapper.findByConditions(
                     city, startDate, endDate, minFastRate, maxSlowRate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -154,7 +154,7 @@ public class TimeEfficiencyService {
             key = "'slow_delivery:' + #city + ':' + #threshold + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<TimeEfficiencyDTO> getSlowDeliveryAnalysis(String city, double threshold, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取慢配送分析[city={}, threshold={}]", city, threshold);
+        log.info(" 查询数据库获取慢配送分析[city={}, threshold={}]", city, threshold);
         List<TimeEfficiencyMetrics> metrics = timeEfficiencyMapper.findSlowDeliveryAnalysis(city, threshold, startDate, limit);
         return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -166,7 +166,7 @@ public class TimeEfficiencyService {
             key = "'fast_delivery:' + #city + ':' + #threshold + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<TimeEfficiencyDTO> getFastDeliveryAnalysis(String city, double threshold, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取快速配送分析[city={}, threshold={}]", city, threshold);
+        log.info(" 查询数据库获取快速配送分析[city={}, threshold={}]", city, threshold);
         List<TimeEfficiencyMetrics> metrics = timeEfficiencyMapper.findFastDeliveryAnalysis(city, threshold, startDate, limit);
         return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -176,7 +176,7 @@ public class TimeEfficiencyService {
      */
     @Cacheable(value = "time_efficiency", key = "'latest:' + #city", unless = "#result == null")
     public TimeEfficiencyDTO getLatestTimeEfficiency(String city) {
-        log.info("🔍 查询数据库获取最新时间效率[city={}]", city);
+        log.info(" 查询数据库获取最新时间效率[city={}]", city);
         TimeEfficiencyMetrics metrics = timeEfficiencyMapper.findLatestByCity(city);
         return metrics != null ? convertToDTO(metrics) : null;
     }
@@ -188,7 +188,7 @@ public class TimeEfficiencyService {
      */
     @Cacheable(value = "stats", key = "'trend_stats:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getDeliveryEfficiencyTrendStats(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取配送效率趋势统计[city={}]", city);
+        log.info(" 查询数据库获取配送效率趋势统计[city={}]", city);
         return timeEfficiencyMapper.getDeliveryEfficiencyTrend(city, startDate);
     }
 
@@ -197,7 +197,7 @@ public class TimeEfficiencyService {
      */
     @Cacheable(value = "stats", key = "'distribution:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getEfficiencyDistribution(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取效率分布统计[city={}]", city);
+        log.info(" 查询数据库获取效率分布统计[city={}]", city);
         return timeEfficiencyMapper.getEfficiencyDistribution(city, startDate);
     }
 
@@ -207,7 +207,7 @@ public class TimeEfficiencyService {
     @Cacheable(value = "stats", key = "'ranking:' + #cities.toString() + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getTimeEfficiencyRanking(List<String> cities, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取时间效率排行，城市数: {}", cities.size());
+        log.info("查询数据库获取时间效率排行，城市数: {}", cities.size());
         return timeEfficiencyMapper.getTimeEfficiencyRanking(cities, startDate, limit);
     }
 
@@ -216,7 +216,7 @@ public class TimeEfficiencyService {
      */
     @Cacheable(value = "stats", key = "'summary:' + #city + ':' + #startDate", unless = "#result == null")
     public Map<String, Object> getTimeEfficiencySummary(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取时间效率汇总[city={}]", city);
+        log.info("查询数据库获取时间效率汇总[city={}]", city);
         return timeEfficiencyMapper.getTimeEfficiencySummary(city, startDate);
     }
 
@@ -227,7 +227,7 @@ public class TimeEfficiencyService {
             key = "'comparison:' + #cities.toString() + ':' + #startDate + ':' + #endDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityTimeEfficiencyComparison(List<String> cities, LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取城市时间效率对比，城市数: {}", cities.size());
+        log.info(" 查询数据库获取城市时间效率对比，城市数: {}", cities.size());
         return timeEfficiencyMapper.getCityTimeEfficiencyComparison(cities, startDate, endDate);
     }
 
@@ -248,7 +248,7 @@ public class TimeEfficiencyService {
     public int cleanupOldData(LocalDate cutoffDate) {
         int result = timeEfficiencyMapper.cleanupOldTimeEfficiency(cutoffDate);
         if (result > 0) {
-            log.info("✅ 清理旧时间效率数据成功，删除 {} 条记录，已清除缓存", result);
+            log.info(" 清理旧时间效率数据成功，删除 {} 条记录，已清除缓存", result);
         }
         return result;
     }

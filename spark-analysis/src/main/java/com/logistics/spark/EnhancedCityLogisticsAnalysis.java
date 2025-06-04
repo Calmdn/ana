@@ -75,7 +75,7 @@ public class EnhancedCityLogisticsAnalysis {
             System.out.println("取件数据路径: " + pickupPath);
             System.out.println("输出路径: " + outputPath);
 
-            // 🚀 开始作业监控
+            // 作业监控
             jobId = jobMonitor.startJobTracking(
                     "物流分析系统",
                     deliverPath,
@@ -100,7 +100,7 @@ public class EnhancedCityLogisticsAnalysis {
             long rawPickupCount = pickupRaw.count();
             System.out.println("原始数据记录数 - 配送: " + rawDeliverCount + ", 取件: " + rawPickupCount);
 
-            // 📊 更新初始进度
+            // 更新初始进度
             jobMonitor.updateJobProgress(jobId, rawDeliverCount + rawPickupCount, "数据加载完成");
 
             // 数据清洗和转换
@@ -113,7 +113,7 @@ public class EnhancedCityLogisticsAnalysis {
 
             System.out.println("清洗后数据记录数 - 配送: " + cleanDeliverCount + ", 取件: " + cleanPickupCount);
 
-            // 📊 更新清洗后进度
+            // 更新清洗后进度
             jobMonitor.updateJobProgress(jobId, totalProcessedRecords, "数据清洗完成");
 
             // 缓存清洗后的数据
@@ -124,46 +124,46 @@ public class EnhancedCityLogisticsAnalysis {
             System.out.println("\n=== 开始执行分析模块 ===");
 
             // 1. 时间效率分析
-            System.out.println("📊 执行时间效率分析...");
+            System.out.println("执行时间效率分析...");
             generateTimeEfficiencyMetrics(deliverClean, pickupClean, outputPath + "/time_efficiency", spark);
             jobMonitor.logModuleCompletion(jobId, "时间效率分析", totalProcessedRecords);
 
             // 2. 空间地理分析
-            System.out.println("🗺️ 执行空间地理分析...");
+            System.out.println("执行空间地理分析...");
             generateSpatialAnalysisMetrics(deliverClean, pickupClean, outputPath + "/spatial_analysis", spark);
             jobMonitor.logModuleCompletion(jobId, "空间地理分析", totalProcessedRecords);
 
             // 3. 运营效率分析
-            System.out.println("⚡ 执行运营效率分析...");
+            System.out.println("执行运营效率分析...");
             generateOperationalEfficiencyMetrics(deliverClean, pickupClean, outputPath + "/operational_efficiency", spark);
             jobMonitor.logModuleCompletion(jobId, "运营效率分析", totalProcessedRecords);
 
             // 4. 预测分析数据
-            System.out.println("🔮 生成预测分析数据...");
+            System.out.println("生成预测分析数据...");
             generatePredictiveAnalysisData(deliverClean, pickupClean, outputPath + "/predictive_data", spark);
             jobMonitor.logModuleCompletion(jobId, "预测分析数据", totalProcessedRecords);
 
             // 5. 成本效益分析
-            System.out.println("💰 执行成本效益分析...");
+            System.out.println("执行成本效益分析...");
             generateCostAnalysisMetrics(deliverClean, pickupClean, outputPath + "/cost_analysis", spark);
             jobMonitor.logModuleCompletion(jobId, "成本效益分析", totalProcessedRecords);
 
             // 6. KPI监控指标
-            System.out.println("📈 生成KPI监控指标...");
+            System.out.println("生成KPI监控指标...");
             generateKPIMetrics(deliverClean, pickupClean, outputPath + "/kpi_metrics", spark);
             jobMonitor.logModuleCompletion(jobId, "KPI监控指标", totalProcessedRecords);
 
             // 7. 异常检测分析
-            System.out.println("🔍 执行异常检测分析...");
+            System.out.println("执行异常检测分析...");
             generateAnomalyDetectionMetrics(deliverClean, pickupClean, outputPath + "/anomaly_detection", spark);
             jobMonitor.logModuleCompletion(jobId, "异常检测分析", totalProcessedRecords);
 
             // 8. 综合报表数据
-            System.out.println("📋 生成综合报表数据...");
+            System.out.println(" 生成综合报表数据...");
             generateComprehensiveReports(deliverClean, pickupClean, outputPath + "/comprehensive_reports", spark);
             jobMonitor.logModuleCompletion(jobId, "综合报表数据", totalProcessedRecords);
 
-            // 🎉 作业成功完成
+            //  作业成功完成
             success = true;
             System.out.println("\n=== 所有分析模块执行完成 ===");
             System.out.println("增强版物流数据分析成功完成!");
@@ -176,7 +176,7 @@ public class EnhancedCityLogisticsAnalysis {
             e.printStackTrace();
             success = false;
         } finally {
-            // 📊 完成作业监控
+            // 完成作业监控
             jobMonitor.completeJobTracking(jobId, success, totalProcessedRecords, errorMessage);
 
             spark.stop();
@@ -805,10 +805,6 @@ public class EnhancedCityLogisticsAnalysis {
      */
     private static void writeTimeEfficiencyToMySQL(Dataset<Row> timeMetrics) {
         try {
-            //Dataset<Row> recentData = timeMetrics
-             //       .filter(col("date").geq(date_sub(current_date(), 7)));
-
-            //recentData.write()
             timeMetrics.write()
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "time_efficiency_metrics", mysqlProps);
@@ -826,9 +822,6 @@ public class EnhancedCityLogisticsAnalysis {
      */
     private static void writeSpatialAnalysisToMySQL(Dataset<Row> spatialMetrics, Dataset<Row> regionMetrics) {
         try {
-//            Dataset<Row> recentSpatialData = spatialMetrics
-//                    .filter(col("date").geq(date_sub(current_date(), 7)));
-
             spatialMetrics.write()
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "spatial_analysis_metrics", mysqlProps);
@@ -845,17 +838,14 @@ public class EnhancedCityLogisticsAnalysis {
      */
     private static void writeOperationalEfficiencyToMySQL(Dataset<Row> courierMetrics, Dataset<Row> regionMetrics) {
         try {
-//            Dataset<Row> recentData = courierMetrics
-//                    .filter(col("date").geq(date_sub(current_date(), 7)));
-
             courierMetrics.write()
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "operational_efficiency_metrics", mysqlProps);
 
-            System.out.println("✅ 运营效率数据已写入MySQL");
+            System.out.println("运营效率数据已写入MySQL");
 
         } catch (Exception e) {
-            System.err.println("⚠️ 运营效率数据MySQL写入失败: " + e.getMessage());
+            System.err.println("⚠运营效率数据MySQL写入失败: " + e.getMessage());
         }
     }
 
@@ -868,10 +858,10 @@ public class EnhancedCityLogisticsAnalysis {
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "predictive_analysis_data", mysqlProps);
 
-            System.out.println("✅ 预测分析数据已写入MySQL");
+            System.out.println("预测分析数据已写入MySQL");
 
         } catch (Exception e) {
-            System.err.println("⚠️ 预测分析数据MySQL写入失败: " + e.getMessage());
+            System.err.println("预测分析数据MySQL写入失败: " + e.getMessage());
         }
     }
 
@@ -887,10 +877,10 @@ public class EnhancedCityLogisticsAnalysis {
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "cost_analysis_metrics", mysqlProps);
 
-            System.out.println("✅ 成本分析数据已写入MySQL");
+            System.out.println(" 成本分析数据已写入MySQL");
 
         } catch (Exception e) {
-            System.err.println("⚠️ 成本分析数据MySQL写入失败: " + e.getMessage());
+            System.err.println(" 成本分析数据MySQL写入失败: " + e.getMessage());
         }
     }
 
@@ -906,10 +896,10 @@ public class EnhancedCityLogisticsAnalysis {
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "comprehensive_reports", mysqlProps);
 
-            System.out.println("✅ 综合报表数据已写入MySQL");
+            System.out.println(" 综合报表数据已写入MySQL");
 
         } catch (Exception e) {
-            System.err.println("⚠️ 综合报表数据MySQL写入失败: " + e.getMessage());
+            System.err.println(" 综合报表数据MySQL写入失败: " + e.getMessage());
         }
     }
 
@@ -925,10 +915,10 @@ public class EnhancedCityLogisticsAnalysis {
                     .mode("overwrite")
                     .jdbc(mysqlUrl, "realtime_kpi", mysqlProps);
 
-            System.out.println("✅ KPI数据已写入MySQL");
+            System.out.println(" KPI数据已写入MySQL");
 
         } catch (Exception e) {
-            System.err.println("⚠️ KPI数据MySQL写入失败: " + e.getMessage());
+            System.err.println(" KPI数据MySQL写入失败: " + e.getMessage());
         }
     }
 
@@ -956,10 +946,10 @@ public class EnhancedCityLogisticsAnalysis {
                     .mode("append")
                     .jdbc(mysqlUrl, "anomaly_alerts", mysqlProps);
 
-            System.out.println("✅ 异常告警数据已写入MySQL");
+            System.out.println(" 异常告警数据已写入MySQL");
 
         } catch (Exception e) {
-            System.err.println("⚠️ 异常数据MySQL写入失败: " + e.getMessage());
+            System.err.println(" 异常数据MySQL写入失败: " + e.getMessage());
         }
     }
 }

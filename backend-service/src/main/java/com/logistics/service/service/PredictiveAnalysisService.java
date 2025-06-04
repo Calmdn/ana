@@ -36,7 +36,7 @@ public class PredictiveAnalysisService {
 
         int result = predictiveAnalysisMapper.insertPredictiveAnalysis(data);
         if (result > 0) {
-            log.info("✅ 保存预测分析数据成功，城市: {}，已清除缓存", data.getCity());
+            log.info("保存预测分析数据成功，城市: {}，已清除缓存", data.getCity());
         }
         return result;
     }
@@ -53,7 +53,7 @@ public class PredictiveAnalysisService {
 
         int result = predictiveAnalysisMapper.batchInsertPredictiveAnalysis(dataList);
         if (result > 0) {
-            log.info("✅ 批量保存预测分析数据成功，共保存 {} 条，已清除缓存", result);
+            log.info("批量保存预测分析数据成功，共保存 {} 条，已清除缓存", result);
         }
         return result;
     }
@@ -68,7 +68,7 @@ public class PredictiveAnalysisService {
 
         int result = predictiveAnalysisMapper.updatePredictiveAnalysis(data);
         if (result > 0) {
-            log.info("✅ 更新预测分析数据成功，已清除缓存");
+            log.info("更新预测分析数据成功，已清除缓存");
         }
         return result;
     }
@@ -84,7 +84,7 @@ public class PredictiveAnalysisService {
     public List<PredictiveAnalysisDTO> getPredictiveAnalysisByCity(String city, String dataType,
                                                                    LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取预测分析[city={}, type={}]", city, dataType);
+            log.info("查询数据库获取预测分析[city={}, type={}]", city, dataType);
             List<PredictiveAnalysisData> data = predictiveAnalysisMapper.findByCityAndTypeAndDateRange(
                     city, dataType, startDate, endDate);
             return data.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -100,7 +100,7 @@ public class PredictiveAnalysisService {
     @Cacheable(value = "predictions", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<PredictiveAnalysisDTO> getPredictiveAnalysisByDate(String city, LocalDate date) {
         try {
-            log.info("🔍 查询数据库获取指定日期预测[city={}, date={}]", city, date);
+            log.info("查询数据库获取指定日期预测[city={}, date={}]", city, date);
             List<PredictiveAnalysisData> data = predictiveAnalysisMapper.findByCityAndDate(city, date);
             return data.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class PredictiveAnalysisService {
     public List<PredictiveAnalysisDTO> getPredictiveAnalysisByConditions(String city, String regionId, String dataType,
                                                                          LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取多条件预测[city={}, type={}]", city, dataType);
+            log.info("查询数据库获取多条件预测[city={}, type={}]", city, dataType);
             List<PredictiveAnalysisData> data = predictiveAnalysisMapper.findByConditions(
                     city, regionId, dataType, startDate, endDate);
             return data.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -143,7 +143,7 @@ public class PredictiveAnalysisService {
             unless = "#result.isEmpty()")
     public List<PredictiveAnalysisDTO> getLatestPredictionsByType(String city, String dataType, int limit) {
         try {
-            log.info("🔍 查询数据库获取最新预测[city={}, type={}, limit={}]", city, dataType, limit);
+            log.info("查询数据库获取最新预测[city={}, type={}, limit={}]", city, dataType, limit);
             List<PredictiveAnalysisData> data = predictiveAnalysisMapper.findLatestPredictions(city, dataType, limit);
             return data.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -180,7 +180,7 @@ public class PredictiveAnalysisService {
     @Cacheable(value = "stats", key = "'order_trend:' + #city + ':' + #dataType + ':' + #startDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getOrderVolumeTrend(String city, String dataType, LocalDate startDate) {
-        log.info("🔍 查询数据库获取订单量趋势[city={}, type={}]", city, dataType);
+        log.info("查询数据库获取订单量趋势[city={}, type={}]", city, dataType);
         return predictiveAnalysisMapper.getOrderVolumeTrend(city, dataType, startDate);
     }
 
@@ -190,7 +190,7 @@ public class PredictiveAnalysisService {
     @Cacheable(value = "stats", key = "'hourly_distribution:' + #city + ':' + #startDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getHourlyDistribution(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取小时分布[city={}]", city);
+        log.info("查询数据库获取小时分布[city={}]", city);
         return predictiveAnalysisMapper.getHourlyDistribution(city, startDate);
     }
 
@@ -200,7 +200,7 @@ public class PredictiveAnalysisService {
     @Cacheable(value = "stats", key = "'efficiency_trend:' + #city + ':' + #startDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getEfficiencyTrend(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取效率趋势[city={}]", city);
+        log.info("查询数据库获取效率趋势[city={}]", city);
         return predictiveAnalysisMapper.getEfficiencyTrend(city, startDate);
     }
 
@@ -210,7 +210,7 @@ public class PredictiveAnalysisService {
     @Cacheable(value = "stats", key = "'capacity_stats:' + #city + ':' + #startDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCapacityAnalysisStats(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取容量分析统计[city={}]", city);
+        log.info("查询数据库获取容量分析统计[city={}]", city);
         return predictiveAnalysisMapper.getCapacityAnalysis(city, startDate);
     }
 
@@ -220,7 +220,7 @@ public class PredictiveAnalysisService {
     @Cacheable(value = "stats", key = "'data_type_stats:' + #city + ':' + #startDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getDataTypeStats(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取数据类型统计[city={}]", city);
+        log.info("查询数据库获取数据类型统计[city={}]", city);
         return predictiveAnalysisMapper.getDataTypeStats(city, startDate);
     }
 
@@ -229,7 +229,7 @@ public class PredictiveAnalysisService {
      */
     @Cacheable(value = "stats", key = "'summary:' + #city + ':' + #startDate", unless = "#result == null")
     public Map<String, Object> getPredictiveSummary(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取预测汇总[city={}]", city);
+        log.info("查询数据库获取预测汇总[city={}]", city);
         return predictiveAnalysisMapper.getPredictiveSummary(city, startDate);
     }
 
@@ -241,7 +241,7 @@ public class PredictiveAnalysisService {
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityPredictiveComparison(List<String> cities, String dataType,
                                                                  LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取城市预测对比，城市数: {}, 类型: {}", cities.size(), dataType);
+        log.info("查询数据库获取城市预测对比，城市数: {}, 类型: {}", cities.size(), dataType);
         return predictiveAnalysisMapper.getCityPredictiveComparison(cities, dataType, startDate, endDate);
     }
 
@@ -262,7 +262,7 @@ public class PredictiveAnalysisService {
     public int cleanupOldData(LocalDate cutoffDate) {
         int result = predictiveAnalysisMapper.cleanupOldPredictions(cutoffDate);
         if (result > 0) {
-            log.info("✅ 清理旧预测分析数据成功，删除 {} 条记录，已清除缓存", result);
+            log.info("清理旧预测分析数据成功，删除 {} 条记录，已清除缓存", result);
         }
         return result;
     }

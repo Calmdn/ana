@@ -343,7 +343,7 @@ const loadData = async () => {
     const [startDate, endDate] = dateRange.value
     const city = currentCity.value
 
-    console.log(`🔄 开始加载数据 - 城市: ${city}, 日期范围: ${startDate} 至 ${endDate}`)
+    console.log(`开始加载数据 - 城市: ${city}, 日期范围: ${startDate} 至 ${endDate}`)
 
     // 并行加载所有数据
     await Promise.all([
@@ -356,18 +356,18 @@ const loadData = async () => {
 
     ElMessage.success('数据加载完成')
   } catch (error) {
-    console.error('❌ 数据加载失败:', error)
+    console.error('数据加载失败:', error)
     ElMessage.error('数据加载失败: ' + error.message)
   } finally {
     loading.value = false
   }
 }
 
-// 修改第370-384行 汇总数据处理
+// 汇总数据处理
 const loadSummaryData = async (city, startDate) => {
   try {
     const response = await timeEfficiencyApi.getSummaryStats(city, startDate)
-    console.log('📊 汇总数据响应:', response)
+    console.log('汇总数据响应:', response)
 
     // 修复：直接检查数据，不检查success字段
     if (response && typeof response === 'object' && !Array.isArray(response)) {
@@ -379,23 +379,23 @@ const loadSummaryData = async (city, startDate) => {
         fastDeliveryRate: Math.round((response.avg_fast_rate || 0) * 100),
         slowDeliveryRate: Math.round((response.avg_slow_rate || 0) * 100)
       })
-      console.log('✅ 汇总数据处理完成:', overviewData)
+      console.log('汇总数据处理完成:', overviewData)
     } else {
-      console.warn('⚠️ 汇总数据格式异常:', response)
+      console.warn('⚠汇总数据格式异常:', response)
     }
   } catch (error) {
-    console.error('❌ 汇总数据加载失败:', error)
+    console.error('汇总数据加载失败:', error)
   }
 }
 
-// 修改第390-458行 趋势数据处理
+// 趋势数据处理
 const loadTrendData = async (city, startDate, endDate) => {
   try {
     const days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1
     const response = await timeEfficiencyApi.getEfficiencyTrend(city, days)
-    console.log('📈 趋势数据响应:', response)
+    console.log('趋势数据响应:', response)
 
-    // 修复：直接检查是否为数组
+    // 检查是否为数组
     if (Array.isArray(response) && response.length > 0) {
       const aggregatedData = {}
 
@@ -408,7 +408,7 @@ const loadTrendData = async (city, startDate, endDate) => {
         } else if (typeof item.date === 'string') {
           dateKey = item.date
         } else {
-          console.warn('⚠️ 未知日期格式:', item.date)
+          console.warn('未知日期格式:', item.date)
           return
         }
 
@@ -444,26 +444,26 @@ const loadTrendData = async (city, startDate, endDate) => {
         }))
         .sort((a, b) => a.date.localeCompare(b.date))
 
-      console.log('✅ 趋势数据处理完成:', trendData.value.length, '天')
+      console.log('趋势数据处理完成:', trendData.value.length, '天')
       
       nextTick(() => {
         updateTrendChart()
       })
     } else {
-      console.warn('⚠️ 趋势数据格式异常:', response)
+      console.warn('趋势数据格式异常:', response)
       trendData.value = []
     }
   } catch (error) {
-    console.error('❌ 趋势数据加载失败:', error)
+    console.error('趋势数据加载失败:', error)
     trendData.value = []
   }
 }
 
-// 修改第460-486行 分布数据处理
+// 分布数据处理
 const loadDistributionData = async (city, startDate) => {
   try {
     const response = await timeEfficiencyApi.getDistributionStats(city, startDate)
-    console.log('📊 分布数据响应:', response)
+    console.log('分布数据响应:', response)
 
     // 修复：直接检查是否为数组
     if (Array.isArray(response) && response.length > 0) {
@@ -472,27 +472,27 @@ const loadDistributionData = async (city, startDate) => {
         value: item.count || 0,
         percentage: item.percentage || 0
       }))
-      console.log('✅ 分布数据处理完成:', distributionData.value)
+      console.log('分布数据处理完成:', distributionData.value)
 
       nextTick(() => {
         updateDistributionChart()
       })
     } else {
-      console.warn('⚠️ 分布数据格式异常:', response)
+      console.warn('分布数据格式异常:', response)
       distributionData.value = []
     }
   } catch (error) {
-    console.error('❌ 分布数据加载失败:', error)
+    console.error('分布数据加载失败:', error)
     distributionData.value = []
   }
 }
 
-// 修改第490-516行 排行数据处理
+// 排行数据处理
 const loadRankingData = async (startDate) => {
   try {
     const cities = ['shanghai', 'jilin', 'hangzhou', 'yantai', 'chongqing']
     const response = await timeEfficiencyApi.getEfficiencyRanking(cities, startDate, 10)
-    console.log('🏆 排行数据响应:', response)
+    console.log('排行数据响应:', response)
 
     // 修复：直接检查是否为数组
     if (Array.isArray(response) && response.length > 0) {
@@ -507,13 +507,13 @@ const loadRankingData = async (startDate) => {
         }))
         .sort((a, b) => b.fastDeliveryRate - a.fastDeliveryRate)
 
-      console.log('✅ 排行数据处理完成:', rankingData.value)
+      console.log('排行数据处理完成:', rankingData.value)
     } else {
-      console.warn('⚠️ 排行数据格式异常:', response)
+      console.warn('排行数据格式异常:', response)
       rankingData.value = []
     }
   } catch (error) {
-    console.error('❌ 排行数据加载失败:', error)
+    console.error('排行数据加载失败:', error)
     rankingData.value = []
   }
 }
@@ -535,20 +535,20 @@ const loadAnalysisData = async () => {
       10
     )
     
-    console.log('⚡ 快速配送分析响应:', fastResponse)
-    console.log('⚡ 快速配送第一条数据:', fastResponse[0])
+    console.log('快速配送分析响应:', fastResponse)
+    console.log('快速配送第一条数据:', fastResponse[0])
     
     // 修复：使用正确的驼峰字段名
     if (Array.isArray(fastResponse) && fastResponse.length > 0) {
       fastAnalysisData.value = fastResponse.map(item => ({
         timeSlot: `${item.city}-${item.date}-${String(item.hour || 0).padStart(2, '0')}:00`,
-        avgDeliveryTime: Math.round(item.avgDeliveryTime || 0), // 驼峰格式
-        fastRate: Math.round((item.fastDeliveryRate || 0) * 100), // 驼峰格式，已经是百分比
-        deliveryCount: item.totalDeliveries || 0, // 驼峰格式
-        fastCount: item.fastDeliveries || 0 // 驼峰格式
+        avgDeliveryTime: Math.round(item.avgDeliveryTime || 0),
+        fastRate: Math.round((item.fastDeliveryRate || 0) * 100),
+        deliveryCount: item.totalDeliveries || 0,
+        fastCount: item.fastDeliveries || 0
       }))
     } else {
-      console.warn('⚠️ 快速配送分析数据格式异常:', fastResponse)
+      console.warn('快速配送分析数据格式异常:', fastResponse)
       fastAnalysisData.value = []
     }
 
@@ -560,8 +560,8 @@ const loadAnalysisData = async () => {
       10
     )
     
-    console.log('🐌 慢速配送分析响应:', slowResponse)
-    console.log('🐌 慢速配送第一条数据:', slowResponse[0])
+    console.log('慢速配送分析响应:', slowResponse)
+    console.log('慢速配送第一条数据:', slowResponse[0])
     
     // 修复：使用正确的驼峰字段名
     if (Array.isArray(slowResponse) && slowResponse.length > 0) {
@@ -573,15 +573,15 @@ const loadAnalysisData = async () => {
         slowCount: item.slowDeliveries || 0 // 驼峰格式
       }))
     } else {
-      console.warn('⚠️ 慢速配送分析数据格式异常:', slowResponse)
+      console.warn('慢速配送分析数据格式异常:', slowResponse)
       slowAnalysisData.value = []
     }
 
-    console.log('✅ 分析数据加载完成 - 快速:', fastAnalysisData.value.length, '慢速:', slowAnalysisData.value.length)
-    console.log('📊 快速配送处理后数据:', fastAnalysisData.value.slice(0, 2))
-    console.log('📊 慢速配送处理后数据:', slowAnalysisData.value.slice(0, 2))
+    console.log('分析数据加载完成 - 快速:', fastAnalysisData.value.length, '慢速:', slowAnalysisData.value.length)
+    console.log('快速配送处理后数据:', fastAnalysisData.value.slice(0, 2))
+    console.log('慢速配送处理后数据:', slowAnalysisData.value.slice(0, 2))
   } catch (error) {
-    console.error('❌ 分析数据加载失败:', error)
+    console.error('分析数据加载失败:', error)
     fastAnalysisData.value = []
     slowAnalysisData.value = []
   }
@@ -738,11 +738,11 @@ const updateDistributionChart = () => {
 
 // 修改watch逻辑，处理初始加载
 watch(currentCity, (newCity, oldCity) => {
-  console.log(`🔄 城市变化: ${oldCity} -> ${newCity}`)
+  console.log(`城市变化: ${oldCity} -> ${newCity}`)
   
   if (newCity && newCity !== '' && newCity !== 'undefined') {
     if (dateRange.value && dateRange.value.length === 2) {
-      console.log('🚀 城市变化触发数据加载')
+      console.log('城市变化触发数据加载')
       loadData()
     }
   }
@@ -759,7 +759,7 @@ onMounted(() => {
   ]
   
   // 数据加载由watch(currentCity)处理
-  console.log('📅 默认日期已设置，等待城市状态触发数据加载...')
+  console.log('默认日期已设置，等待城市状态触发数据加载...')
 })
 
 // 生命周期

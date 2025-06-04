@@ -391,7 +391,7 @@ const generateReport = async () => {
 
   generating.value = true
   try {
-    console.log('🔍 开始生成报告，参数:', reportForm.value)
+    console.log('开始生成报告，参数:', reportForm.value)
     
     const city = reportForm.value.city
     
@@ -403,15 +403,15 @@ const generateReport = async () => {
           new Date().toISOString().split('T')[0]
         ]
     
-    console.log('📍 生成报告城市:', city)
-    console.log('📅 报告日期范围:', dateRange)
+    console.log('生成报告城市:', city)
+    console.log('报告日期范围:', dateRange)
     
     // 基于选择的数据类型，并行调用相应的API
     const reportData = {}
     const apiPromises = []
     
     if (reportForm.value.dataTypes.includes('kpi')) {
-      console.log('📊 获取KPI数据...')
+      console.log('获取KPI数据...')
       apiPromises.push(
         loadKpiData(city, dateRange).then(data => {
           reportData.kpi = data
@@ -435,7 +435,7 @@ const generateReport = async () => {
     }
     
     if (reportForm.value.dataTypes.includes('efficiency')) {
-      console.log('🔧 获取运营效率数据...')
+      console.log('获取运营效率数据...')
       apiPromises.push(
         loadOperationalEfficiencyData(city, dateRange).then(data => {
           reportData.operational = data
@@ -447,7 +447,7 @@ const generateReport = async () => {
     }
     
     if (reportForm.value.dataTypes.includes('spatial')) {
-      console.log('🗺️ 获取空间分析数据...')
+      console.log('获取空间分析数据...')
       apiPromises.push(
         loadSpatialAnalysisData(city, dateRange).then(data => {
           reportData.spatial = data
@@ -459,7 +459,7 @@ const generateReport = async () => {
     }
     
     if (reportForm.value.dataTypes.includes('alerts')) {
-      console.log('🚨 获取告警数据...')
+      console.log('获取告警数据...')
       apiPromises.push(
         loadAlertsData(city, dateRange).then(data => {
           reportData.alerts = data
@@ -473,7 +473,7 @@ const generateReport = async () => {
     // 等待所有API调用完成
     await Promise.all(apiPromises)
     
-    console.log('📊 报告数据收集完成:', reportData)
+    console.log('报告数据收集完成:', reportData)
     
     // 生成报告摘要
     const reportSummary = generateReportSummary(reportData, city, dateRange)
@@ -512,7 +512,7 @@ const generateReport = async () => {
     }
     
   } catch (error) {
-    console.error('❌ 生成报告失败:', error)
+    console.error('生成报告失败:', error)
     ElMessage.error(`生成报告失败: ${error.message}`)
   } finally {
     generating.value = false
@@ -695,7 +695,7 @@ const generateReportSummary = (reportData, city, dateRange) => {
 // 预览报告
 const previewReport = async (report) => {
   try {
-    console.log('👁️ 预览报告:', report.title)
+    console.log('预览报告:', report.title)
     
     const htmlContent = generateReportHTML(report)
     

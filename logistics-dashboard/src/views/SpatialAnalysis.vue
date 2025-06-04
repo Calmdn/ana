@@ -153,7 +153,7 @@ const selectedMetric = ref('orders')
 const routeStart = ref('')
 const routeEnd = ref('')
 
-// 扩展城市坐标范围配置，包含行政区划分
+// 扩展城市坐标范围配置
 const CITY_COORDINATES = {
   yantai: { 
     lng: [121.0, 121.8], 
@@ -261,7 +261,6 @@ const routeOptimization = ref(null)
 const trafficData = ref([])
 const densityData = ref([])
 
-// 根据城市生成对应的模拟数据
 const generateCityHeatmapData = (city) => {
   const coords = CITY_COORDINATES[city] || CITY_COORDINATES.shanghai
   return Array.from({ length: 50 }, () => [
@@ -569,14 +568,14 @@ const densityAnalysisOptions = computed(() => ({
   ]
 }))
 
-// 修复数据加载函数 - 根据API数据结构处理
+// 修复数据加载函数
 const loadSpatialData = async () => {
   loading.value = true
   try {
     const city = dashboardStore.selectedCity
     const today = new Date().toISOString().split('T')[0]
     
-    // 城市名称映射 - 将中文城市名转换为API需要的英文名
+    // 城市名称映射
     const cityMapping = {
       'yantai': 'Yantai',
       'shanghai': 'Shanghai', 
@@ -587,7 +586,7 @@ const loadSpatialData = async () => {
     
     const englishCity = cityMapping[city] || 'Shanghai'
     
-    console.log('🔍 开始加载空间分析数据，城市:', city, '→', englishCity)
+    console.log('开始加载空间分析数据，城市:', city, '→', englishCity)
 
     // 先设置城市对应的默认数据
     heatmapData.value = generateCityHeatmapData(city)
@@ -603,14 +602,14 @@ const loadSpatialData = async () => {
       totalRoutes: Math.floor(Math.random() * 50) + 80
     }
 
-    console.log('📊 默认数据设置完成，开始尝试加载真实数据...')
+    console.log('默认数据设置完成，开始尝试加载真实数据...')
 
     await new Promise(resolve => setTimeout(resolve, 200))
     
     try {
-      // 1. 获取热力图数据 - 使用正确的城市名称
+      // 1. 获取热力图数据
       let heatmap = null
-      console.log('🌍 正在请求城市数据:', englishCity)
+      console.log('正在请求城市数据:', englishCity)
       
       if (selectedMetric.value === 'delivery_time') {
         heatmap = await spatialAnalysisApi.getDeliveryTimeHeatmap(englishCity, today)
@@ -619,9 +618,9 @@ const loadSpatialData = async () => {
       }
       
       if (heatmap && Array.isArray(heatmap) && heatmap.length > 0) {
-        console.log('🔥 获取到真实热力图数据:', heatmap.length, '条')
-        console.log('📝 原始数据样例:', heatmap.slice(0, 3))
-        console.log('🏙️ 数据归属城市:', heatmap[0]?.city)
+        console.log('获取到真实热力图数据:', heatmap.length, '条')
+        console.log('原始数据样例:', heatmap.slice(0, 3))
+        console.log('数据归属城市:', heatmap[0]?.city)
         
         // 验证数据是否属于当前选择的城市
         const isCorrectCity = heatmap.some(item => 
@@ -630,7 +629,7 @@ const loadSpatialData = async () => {
         )
         
         if (!isCorrectCity) {
-          console.warn('⚠️ 返回的数据不属于当前选择的城市，可能API不支持该城市或数据不存在')
+          console.warn('返回的数据不属于当前选择的城市，可能API不支持该城市或数据不存在')
           ElMessage.warning(`${englishCity} 城市暂无数据，显示模拟数据`)
         } else {
           // 根据实际API数据结构解析
@@ -670,12 +669,12 @@ const loadSpatialData = async () => {
               validCount++
               
               if (!isInCityRange && index < 3) {
-                console.log(`📍 数据点 #${index} 超出城市范围但仍保留:`, { lng, lat, value, expectedRange: cityConfig })
+                console.log(`数据点 #${index} 超出城市范围但仍保留:`, { lng, lat, value, expectedRange: cityConfig })
               }
             } else {
               invalidCount++
               if (index < 5) { // 只记录前5个无效数据的详情
-                console.warn(`⚠️ 无效数据 #${index}:`, {
+                console.warn(`无效数据 #${index}:`, {
                   original: item,
                   parsed: { lng, lat, value },
                   isValidLng: !isNaN(lng) && lng > 0,
@@ -686,33 +685,33 @@ const loadSpatialData = async () => {
             }
           })
           
-          console.log(`📊 数据处理结果: 有效 ${validCount} 条, 无效 ${invalidCount} 条`)
+          console.log(`数据处理结果: 有效 ${validCount} 条, 无效 ${invalidCount} 条`)
           
           if (processedData.length > 0) {
             heatmapData.value = processedData
-            console.log('🗺️ 使用真实热力图数据:', processedData.length, '条')
-            console.log('🎯 处理后数据样例:', processedData.slice(0, 3))
+            console.log('使用真实热力图数据:', processedData.length, '条')
+            console.log('处理后数据样例:', processedData.slice(0, 3))
           } else {
-            console.warn('⚠️ 所有数据都无效，保持默认数据')
+            console.warn('所有数据都无效，保持默认数据')
           }
         }
       } else {
-        console.log('📝 未获取到有效的热力图数据，使用默认数据')
+        console.log('未获取到有效的热力图数据，使用默认数据')
         ElMessage.info(`${englishCity} 城市暂无热力图数据`)
       }
     } catch (error) {
-      console.warn('⚠️ 热力图数据API调用失败:', error.message)
+      console.warn('热力图数据API调用失败:', error.message)
       ElMessage.warning(`获取 ${englishCity} 热力图数据失败: ${error.message}`)
     }
 
     try {
       // 2. 获取区域统计数据 - 使用正确的城市名称
-      console.log('📊 正在获取区域统计数据:', englishCity)
+      console.log('正在获取区域统计数据:', englishCity)
       const todayData = await spatialAnalysisApi.getTodaySpatialData(englishCity)
       
       if (todayData && Array.isArray(todayData) && todayData.length > 0) {
-        console.log('📊 获取到今日空间数据:', todayData.length, '条')
-        console.log('🏙️ 区域数据归属城市:', todayData[0]?.city)
+        console.log('获取到今日空间数据:', todayData.length, '条')
+        console.log('区域数据归属城市:', todayData[0]?.city)
         
         // 验证数据是否属于当前选择的城市
         const isCorrectCity = todayData.some(item => 
@@ -721,7 +720,7 @@ const loadSpatialData = async () => {
         )
         
         if (!isCorrectCity) {
-          console.warn('⚠️ 区域数据不属于当前选择的城市')
+          console.warn('区域数据不属于当前选择的城市')
           ElMessage.warning(`${englishCity} 城市暂无区域数据，显示模拟数据`)
         } else {
           // 按行政区域聚合数据
@@ -766,7 +765,7 @@ const loadSpatialData = async () => {
           
           if (processedRegional.length > 0) {
             regionalStats.value = processedRegional
-            console.log('📍 使用真实区域数据:', processedRegional)
+            console.log('使用真实区域数据:', processedRegional)
             
             // 重新计算统计数据
             spatialStats.value = {
@@ -778,21 +777,21 @@ const loadSpatialData = async () => {
           }
         }
       } else {
-        console.log('📝 未获取到有效的区域数据，使用默认数据')
+        console.log('未获取到有效的区域数据，使用默认数据')
         ElMessage.info(`${englishCity} 城市暂无区域数据`)
       }
     } catch (error) {
-      console.warn('⚠️ 今日数据API调用失败:', error.message)
+      console.warn('今日数据API调用失败:', error.message)
       ElMessage.warning(`获取 ${englishCity} 区域数据失败: ${error.message}`)
     }
 
     try {
       // 3. 获取密度分析数据 - 使用正确的城市名称
-      console.log('⏰ 正在获取密度分析数据:', englishCity)
+      console.log('正在获取密度分析数据:', englishCity)
       const todayData = await spatialAnalysisApi.getTodaySpatialData(englishCity)
       
       if (todayData && Array.isArray(todayData) && todayData.length > 0) {
-        console.log('📍 获取到真实今日数据用于密度分析:', todayData.length, '条')
+        console.log('获取到真实今日数据用于密度分析:', todayData.length, '条')
         
         // 按小时聚合数据
         const hourlyData = Array.from({ length: 24 }, (_, hour) => {
@@ -817,21 +816,21 @@ const loadSpatialData = async () => {
         })
         
         densityData.value = hourlyData
-        console.log('⏰ 使用处理后的密度数据')
+        console.log('使用处理后的密度数据')
       }
     } catch (error) {
-      console.warn('⚠️ 密度分析数据API调用失败:', error.message)
+      console.warn('密度分析数据API调用失败:', error.message)
     }
 
-    console.log('✅ 空间分析数据加载完成')
-    console.log('📊 最终统计数据:', spatialStats.value)
-    console.log('🔥 最终热力图数据点数:', heatmapData.value.length)
-    console.log('📍 最终区域数据条数:', regionalStats.value.length)
+    console.log('空间分析数据加载完成')
+    console.log('最终统计数据:', spatialStats.value)
+    console.log('最终热力图数据点数:', heatmapData.value.length)
+    console.log('最终区域数据条数:', regionalStats.value.length)
     
     ElMessage.success(`${englishCity} 空间分析数据加载完成`)
     
   } catch (error) {
-    console.error('❌ 加载空间分析数据失败:', error)
+    console.error('加载空间分析数据失败:', error)
     ElMessage.error('加载空间分析数据失败，显示默认数据')
   } finally {
     loading.value = false
@@ -840,13 +839,13 @@ const loadSpatialData = async () => {
 
 // 添加 refreshData 方法
 const refreshData = async () => {
-  console.log('🔄 手动刷新数据...')
+  console.log('手动刷新数据...')
   await loadSpatialData()
 }
 
 // 改进指标切换函数 - 避免ECharts冲突
 const handleMetricChange = async () => {
-  console.log('📈 指标切换为:', selectedMetric.value)
+  console.log('指标切换为:', selectedMetric.value)
   
   // 立即更新模拟数据
   const city = dashboardStore.selectedCity
@@ -902,7 +901,7 @@ const getRouteOptimization = async () => {
 }
 
 onMounted(() => {
-  console.log('🚀 空间分析组件已挂载')
+  console.log('空间分析组件已挂载')
   loadSpatialData()
 })
 </script>

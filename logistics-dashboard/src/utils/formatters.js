@@ -12,7 +12,7 @@ dayjs.extend(duration)
 dayjs.extend(customParseFormat)
 dayjs.locale('zh-cn')
 
-/* ========== 数字格式化 ========== */
+/*数字格式化*/
 
 /**
  * 格式化数字，添加千分位分隔符
@@ -115,7 +115,7 @@ export const formatLargeNumber = (num, decimals = 1) => {
   }
 }
 
-/* ========== 时间格式化 ========== */
+/*时间格式化*/
 
 /**
  * 格式化日期时间
@@ -227,7 +227,7 @@ export const formatCountdown = (endTime) => {
   }
 }
 
-/* ========== 字符串格式化 ========== */
+/* 字符串格式化 */
 
 /**
  * 格式化手机号
@@ -350,7 +350,7 @@ export const toSnakeCase = (str) => {
   return str.replace(/([A-Z])/g, '_$1').toLowerCase()
 }
 
-/* ========== 地址格式化 ========== */
+/*地址格式化*/
 
 /**
  * 格式化地址
@@ -383,7 +383,7 @@ export const formatCoordinates = (longitude, latitude, precision = 6) => {
   return `${Number(longitude).toFixed(precision)}, ${Number(latitude).toFixed(precision)}`
 }
 
-/* ========== 业务特定格式化 ========== */
+/*业务特定格式化 */
 
 /**
  * 格式化订单号
@@ -448,7 +448,7 @@ export const formatRating = (rating, maxRating = 5) => {
   return `${Number(rating).toFixed(1)}/${maxRating}`
 }
 
-/* ========== 数组和对象格式化 ========== */
+/*数组和对象格式化*/
 
 /**
  * 格式化数组为字符串
@@ -484,7 +484,7 @@ export const formatObjectToQueryString = (obj) => {
   return params.toString()
 }
 
-/* ========== 导出默认格式化器 ========== */
+/* 导出默认格式化器*/
 
 export default {
   // 数字

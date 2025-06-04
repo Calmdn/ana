@@ -7,14 +7,14 @@ import java.time.LocalDate;
 @Data
 public class PredictiveAnalysisDTO {
     private String city;
-    private String regionId;  // 注意：数据库中是text类型
-    private LocalDate dsDate;  // 对应数据库的ds_date字段
+    private String regionId;
+    private LocalDate dsDate;
     private Integer hour;
-    private Long orderVolume;  // 数据库中是bigint
-    private Long courierCount; // 数据库中是bigint
+    private Long orderVolume;
+    private Long courierCount;
     private BigDecimal avgDuration;
     private BigDecimal totalDistance;
-    private Long volumeTrend;  // 数据库中是bigint
+    private Long volumeTrend;
     private BigDecimal efficiencyScore;
     private String dataType;
 

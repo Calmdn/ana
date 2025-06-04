@@ -9,7 +9,7 @@ public class OperationalEfficiencyDTO {
     private String city;
     private Integer regionId;
     private Integer courierId;
-    private LocalDate date;  // 改为date，与数据库字段一致
+    private LocalDate date;
     private Long totalOrders;
     private Long uniqueAoiServed;
     private BigDecimal totalDistance;

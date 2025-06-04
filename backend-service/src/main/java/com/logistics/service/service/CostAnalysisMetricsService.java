@@ -36,7 +36,7 @@ public class CostAnalysisMetricsService {
 
         int result = costAnalysisMetricsMapper.insertCostAnalysis(metrics);
         if (result > 0) {
-            log.info("✅ 保存成本分析数据成功，城市: {}，已清除缓存", metrics.getCity());
+            log.info("  保存成本分析数据成功，城市: {}，已清除缓存", metrics.getCity());
         }
         return result;
     }
@@ -57,7 +57,7 @@ public class CostAnalysisMetricsService {
         }
 
         if (count > 0) {
-            log.info("✅ 批量保存成本分析数据成功，共保存 {} 条，已清除缓存", count);
+            log.info("  批量保存成本分析数据成功，共保存 {} 条，已清除缓存", count);
         }
         return count;
     }
@@ -73,7 +73,7 @@ public class CostAnalysisMetricsService {
 
         int result = costAnalysisMetricsMapper.updateCostAnalysis(metrics);
         if (result > 0) {
-            log.info("✅ 更新成本分析数据成功，已清除缓存");
+            log.info("  更新成本分析数据成功，已清除缓存");
         }
         return result;
     }
@@ -86,7 +86,7 @@ public class CostAnalysisMetricsService {
     @Cacheable(value = "costs", key = "'city:' + #city + ':' + #startDate + ':' + #endDate",
             unless = "#result.isEmpty()")
     public List<CostAnalysisMetrics> getCostAnalysisByCity(String city, LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取城市成本分析[city={}]", city);
+        log.info("  查询数据库获取城市成本分析[city={}]", city);
         return costAnalysisMetricsMapper.findByCityAndDateRange(city, startDate, endDate);
     }
 
@@ -96,7 +96,7 @@ public class CostAnalysisMetricsService {
     @Cacheable(value = "costs", key = "'region:' + #regionId + ':' + #startDate + ':' + #endDate",
             unless = "#result.isEmpty()")
     public List<CostAnalysisMetrics> getCostAnalysisByRegion(Integer regionId, LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取区域成本分析[regionId={}]", regionId);
+        log.info("  查询数据库获取区域成本分析[regionId={}]", regionId);
         return costAnalysisMetricsMapper.findByRegionAndDateRange(regionId, startDate, endDate);
     }
 
@@ -109,7 +109,7 @@ public class CostAnalysisMetricsService {
     public List<CostAnalysisMetrics> getCostAnalysisByConditions(String city, Integer regionId,
                                                                  String analysisType,
                                                                  LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取多条件成本分析[city={}, type={}]", city, analysisType);
+        log.info("  查询数据库获取多条件成本分析[city={}, type={}]", city, analysisType);
         return costAnalysisMetricsMapper.findByConditions(city, regionId, analysisType, startDate, endDate);
     }
 
@@ -119,7 +119,7 @@ public class CostAnalysisMetricsService {
     @Cacheable(value = "costs", key = "'high_cost:' + #threshold + ':' + #date + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<CostAnalysisMetrics> getHighCostAlerts(double threshold, LocalDate date, int limit) {
-        log.info("🔍 查询数据库获取高成本告警[threshold={}]", threshold);
+        log.info("  查询数据库获取高成本告警[threshold={}]", threshold);
         return costAnalysisMetricsMapper.findHighCostAlerts(threshold, date, limit);
     }
 
@@ -130,7 +130,7 @@ public class CostAnalysisMetricsService {
      */
     @Cacheable(value = "stats", key = "'trend:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityCostTrend(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取城市成本趋势[city={}]", city);
+        log.info("  查询数据库获取城市成本趋势[city={}]", city);
         return costAnalysisMetricsMapper.getCityCostTrend(city, startDate);
     }
 
@@ -140,7 +140,7 @@ public class CostAnalysisMetricsService {
     @Cacheable(value = "stats", key = "'ranking:' + #city + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getRegionCostRanking(String city, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取区域成本排行[city={}]", city);
+        log.info("  查询数据库获取区域成本排行[city={}]", city);
         return costAnalysisMetricsMapper.getRegionCostRanking(city, startDate, limit);
     }
 
@@ -149,7 +149,7 @@ public class CostAnalysisMetricsService {
      */
     @Cacheable(value = "stats", key = "'type_stats:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getAnalysisTypeStats(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取分析类型统计[city={}]", city);
+        log.info("  查询数据库获取分析类型统计[city={}]", city);
         return costAnalysisMetricsMapper.getAnalysisTypeStats(city, startDate);
     }
 
@@ -158,7 +158,7 @@ public class CostAnalysisMetricsService {
      */
     @Cacheable(value = "stats", key = "'summary:' + #city + ':' + #startDate", unless = "#result == null")
     public Map<String, Object> getCostSummary(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取成本汇总统计[city={}]", city);
+        log.info("  查询数据库获取成本汇总统计[city={}]", city);
         return costAnalysisMetricsMapper.getCostSummary(city, startDate);
     }
 
@@ -179,7 +179,7 @@ public class CostAnalysisMetricsService {
     public int cleanupOldData(LocalDate cutoffDate) {
         int result = costAnalysisMetricsMapper.cleanupOldCostAnalysis(cutoffDate);
         if (result > 0) {
-            log.info("✅ 清理旧成本分析数据成功，删除 {} 条记录，已清除缓存", result);
+            log.info("  清理旧成本分析数据成功，删除 {} 条记录，已清除缓存", result);
         }
         return result;
     }

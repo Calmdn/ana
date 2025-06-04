@@ -227,28 +227,27 @@ const anomalyData = ref([])
 const riskData = ref([])
 const predictionHistory = ref([])
 
-// 清理后的数据加载函数 - 只使用真实数据
+// 清理后的数据加载函数
 const loadPredictiveData = async () => {
   loading.value = true
   try {
     const city = dashboardStore.selectedCity
     const today = new Date().toISOString().split('T')[0]
     
-    console.log('🔍 开始加载预测数据，城市:', city)
+    console.log('开始加载预测数据，城市:', city)
 
     // 1. 获取需求预测数据
     try {
       const trendData = await predictiveApi.getDemandForecast(city, forecastDays.value)
-      console.log('📊 趋势数据:', trendData)
+      console.log('趋势数据:', trendData)
       
       if (trendData && Array.isArray(trendData) && trendData.length > 0) {
-        // 过滤掉 ds_date 为空的数据
         const validData = trendData.filter(item => 
           item && (item.dsDate || item.date) && 
           (item.dsDate !== '' && item.date !== '')
         )
         
-        console.log('📊 过滤后的有效数据:', validData.length, '条')
+        console.log('过滤后的有效数据:', validData.length, '条')
         
         if (validData.length > 0) {
           demandForecastData.value = validData.map(item => ({
@@ -263,19 +262,19 @@ const loadPredictiveData = async () => {
           const totalPredicted = demandForecastData.value.reduce((sum, item) => sum + (item.predicted || 0), 0)
           predictedOrders.value = Math.round(totalPredicted)
           
-          console.log('📈 处理后的需求预测数据:', demandForecastData.value.slice(0, 3))
+          console.log('处理后的需求预测数据:', demandForecastData.value.slice(0, 3))
         } else {
-          console.warn('⚠️ 没有有效的日期数据（ds_date都为空）')
+          console.warn('没有有效的日期数据（ds_date都为空）')
           demandForecastData.value = []
           predictedOrders.value = 0
         }
       } else {
-        console.warn('⚠️ 趋势数据为空')
+        console.warn('趋势数据为空')
         demandForecastData.value = []
         predictedOrders.value = 0
       }
     } catch (error) {
-      console.warn('❌ 趋势数据获取失败:', error.message)
+      console.warn('趋势数据获取失败:', error.message)
       demandForecastData.value = []
       predictedOrders.value = 0
     }
@@ -283,7 +282,7 @@ const loadPredictiveData = async () => {
     // 2. 获取最新预测数据
     try {
       const latestData = await predictiveApi.getLatestPrediction(city, null, 24)
-      console.log('📈 最新预测数据:', latestData)
+      console.log('最新预测数据:', latestData)
       
       if (latestData && Array.isArray(latestData) && latestData.length > 0) {
         // 过滤掉 ds_date 为空的数据
@@ -292,7 +291,7 @@ const loadPredictiveData = async () => {
           (item.dsDate !== '' && item.date !== '')
         )
         
-        console.log('📈 过滤后的最新数据:', validLatestData.length, '条')
+        console.log('过滤后的最新数据:', validLatestData.length, '条')
         
         if (validLatestData.length > 0) {
           const latest = validLatestData[0]
@@ -304,16 +303,16 @@ const loadPredictiveData = async () => {
           }
         }
       } else {
-        console.warn('⚠️ 最新预测数据为空')
+        console.warn('最新预测数据为空')
       }
     } catch (error) {
-      console.warn('❌ 最新数据获取失败:', error.message)
+      console.warn('最新数据获取失败:', error.message)
     }
 
     // 3. 获取小时分布数据
     try {
       const hourlyData = await predictiveApi.getHourlyDistribution(city, today)
-      console.log('⏰ 小时分布数据:', hourlyData)
+      console.log('小时分布数据:', hourlyData)
       
       if (hourlyData && Array.isArray(hourlyData) && hourlyData.length > 0) {
         // 即使 ds_date 为空，但如果有 hour 数据也可以使用
@@ -321,7 +320,7 @@ const loadPredictiveData = async () => {
           item && (item.hour !== undefined || item.dsHour !== undefined)
         )
         
-        console.log('⏰ 过滤后的小时数据:', validHourlyData.length, '条')
+        console.log('过滤后的小时数据:', validHourlyData.length, '条')
         
         if (validHourlyData.length > 0) {
           anomalyData.value = validHourlyData.map(item => ({
@@ -331,37 +330,36 @@ const loadPredictiveData = async () => {
             orderVolume: item.orderVolume || 0
           }))
         } else {
-          console.warn('⚠️ 没有有效的小时数据')
+          console.warn('没有有效的小时数据')
           anomalyData.value = []
         }
       } else {
-        console.warn('⚠️ 小时分布数据为空')
+        console.warn('小时分布数据为空')
         anomalyData.value = []
       }
     } catch (error) {
-      console.warn('❌ 小时分布获取失败:', error.message)
+      console.warn('小时分布获取失败:', error.message)
       anomalyData.value = []
     }
 
     // 4. 获取容量分析数据
     try {
       const capacityData = await predictiveApi.getCapacityAnalysis(city)
-      console.log('📊 容量分析数据:', capacityData)
+      console.log('容量分析数据:', capacityData)
       
       if (capacityData && Array.isArray(capacityData) && capacityData.length > 0) {
-        // 即使 ds_date 为空，但如果有 orderVolume 数据也可以使用
         const validCapacityData = capacityData.filter(item => 
           item && (item.orderVolume !== undefined && item.orderVolume !== null)
         )
         
-        console.log('📊 过滤后的容量数据:', validCapacityData.length, '条')
+        console.log('过滤后的容量数据:', validCapacityData.length, '条')
         
         if (validCapacityData.length > 0) {
           const totalOrders = validCapacityData.reduce((sum, item) => sum + (item.orderVolume || 0), 0)
           const totalCouriers = validCapacityData.reduce((sum, item) => sum + (item.courierCount || item.activeCouriers || 0), 0)
           const utilization = totalCouriers > 0 ? totalOrders / totalCouriers : 0
           
-          console.log('📊 容量分析结果:', { totalOrders, totalCouriers, utilization })
+          console.log('容量分析结果:', { totalOrders, totalCouriers, utilization })
           
           if (utilization > 8) {
             riskLevel.value = '高'
@@ -386,17 +384,17 @@ const loadPredictiveData = async () => {
             ]
           }
         } else {
-          console.warn('⚠️ 没有有效的容量数据')
+          console.warn('没有有效的容量数据')
           riskLevel.value = '未知'
           riskData.value = []
         }
       } else {
-        console.warn('⚠️ 容量数据为空')
+        console.warn('容量数据为空')
         riskLevel.value = '未知'
         riskData.value = []
       }
     } catch (error) {
-      console.warn('❌ 容量数据获取失败:', error.message)
+      console.warn('容量数据获取失败:', error.message)
       riskLevel.value = '未知'
       riskData.value = []
     }
@@ -404,7 +402,7 @@ const loadPredictiveData = async () => {
     // 5. 获取汇总统计数据
     try {
       const summaryData = await predictiveApi.getSummaryStats(city, today)
-      console.log('📊 汇总统计数据:', summaryData)
+      console.log('汇总统计数据:', summaryData)
       
       if (summaryData) {
         if (summaryData.accuracy || summaryData.predictionAccuracy) {
@@ -415,7 +413,7 @@ const loadPredictiveData = async () => {
         }
       }
     } catch (error) {
-      console.warn('❌ 汇总统计获取失败:', error.message)
+      console.warn('汇总统计获取失败:', error.message)
     }
 
     // 6. 获取自定义预测数据
@@ -426,7 +424,7 @@ const loadPredictiveData = async () => {
         new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
         today
       )
-      console.log('🔧 自定义预测数据:', customData)
+      console.log('自定义预测数据:', customData)
       
       if (customData && Array.isArray(customData) && customData.length > 0) {
         // 过滤掉 ds_date 为空的数据
@@ -446,33 +444,33 @@ const loadPredictiveData = async () => {
             confidence: item.confidence || predictionConfig.value.confidenceInterval
           }))
         } else {
-          console.warn('⚠️ 没有有效的自定义预测数据')
+          console.warn('没有有效的自定义预测数据')
           predictionHistory.value = []
         }
       } else {
-        console.warn('⚠️ 自定义预测数据为空')
+        console.warn('自定义预测数据为空')
         predictionHistory.value = []
       }
     } catch (error) {
-      console.warn('❌ 自定义预测数据获取失败:', error.message)
+      console.warn('自定义预测数据获取失败:', error.message)
       predictionHistory.value = []
     }
 
     // 7. 获取记录统计数据
     try {
       const countData = await predictiveApi.getCount(city, 'order_volume')
-      console.log('🔢 记录统计:', countData)
+      console.log('记录统计:', countData)
       
       if (countData && typeof countData === 'number') {
-        console.log(`📊 ${city} 城市共有 ${countData} 条预测记录`)
+        console.log(`${city} 城市共有 ${countData} 条预测记录`)
       }
     } catch (error) {
-      console.warn('❌ 记录统计获取失败:', error.message)
+      console.warn('记录统计获取失败:', error.message)
     }
 
     // 输出最终状态
-    console.log('✅ 预测分析数据加载完成')
-    console.log('📊 最终数据状态:', {
+    console.log('预测分析数据加载完成')
+    console.log('最终数据状态:', {
       demandForecastData: demandForecastData.value.length,
       anomalyData: anomalyData.value.length,
       riskData: riskData.value.length,
@@ -493,16 +491,16 @@ const loadPredictiveData = async () => {
     }
     
   } catch (error) {
-    console.error('❌ 预测分析数据加载失败:', error)
+    console.error('预测分析数据加载失败:', error)
     ElMessage.error('加载预测分析数据失败: ' + error.message)
   } finally {
     loading.value = false
   }
 }
 
-// 清理后的图表配置 - 只显示真实数据
+// 清理后的图表配置
 const demandForecastOptions = computed(() => {
-  console.log('📊 生成图表配置，数据长度:', demandForecastData.value.length)
+  console.log('生成图表配置，数据长度:', demandForecastData.value.length)
   
   if (!demandForecastData.value || demandForecastData.value.length === 0) {
     return {

@@ -147,7 +147,6 @@
               <el-table-column prop="courierId" label="配送员ID" width="100" />
               <el-table-column prop="city" label="城市" width="80" />
               <el-table-column prop="regionId" label="区域ID" width="80" />
-              <!-- 删除效率分数列 -->
               <el-table-column prop="deliveryCount" label="配送数量" align="center" />
               <el-table-column prop="avgDeliveryTime" label="平均配送时间" align="center">
                 <template #default="{ row }">
@@ -174,7 +173,6 @@
               <el-table-column prop="courierId" label="配送员ID" width="100" />
               <el-table-column prop="city" label="城市" width="80" />
               <el-table-column prop="regionId" label="区域ID" width="80" />
-              <!-- 删除效率分数列 -->
               <el-table-column prop="deliveryCount" label="配送数量" align="center" />
               <el-table-column prop="avgDeliveryTime" label="平均配送时间" align="center">
                 <template #default="{ row }">
@@ -307,7 +305,7 @@ const loadData = async () => {
     const [startDate, endDate] = dateRange.value
     const city = currentCity.value
 
-    console.log(`🔄 开始加载运营效率数据 - 城市: ${city}, 日期范围: ${startDate} 至 ${endDate}`)
+    console.log(`开始加载运营效率数据 - 城市: ${city}, 日期范围: ${startDate} 至 ${endDate}`)
 
     // 并行加载所有数据
     await Promise.all([
@@ -319,7 +317,7 @@ const loadData = async () => {
 
     ElMessage.success('数据加载完成')
   } catch (error) {
-    console.error('❌ 数据加载失败:', error)
+    console.error('数据加载失败:', error)
     ElMessage.error('数据加载失败: ' + error.message)
   } finally {
     loading.value = false
@@ -347,7 +345,6 @@ const loadSummaryData = async (city, startDate) => {
       Object.assign(overviewData, {
         efficiencyScore: efficiencyScore,
         avgDeliveryTime: Math.round(response.avg_delivery_time || 0),
-        // 修复：保留1位小数，如果小于1则显示小数
         ordersPerHour: response.avg_orders_per_hour < 1 ? 
           Math.round((response.avg_orders_per_hour || 0) * 10) / 10 : 
           Math.round(response.avg_orders_per_hour || 0),
@@ -359,27 +356,27 @@ const loadSummaryData = async (city, startDate) => {
       })
       
       // 添加数据合理性检查
-      console.log('📊 数据合理性检查:')
+      console.log('数据合理性检查:')
       console.log(`  总订单数: ${response.total_orders}`)
       console.log(`  每小时订单数: ${response.avg_orders_per_hour}`)
       console.log(`  配送时间: ${response.avg_delivery_time}分钟`)
       console.log(`  效率分数: ${rawEfficiencyScore.toFixed(2)}%`)
       
-      console.log('✅ 汇总数据处理完成:', overviewData)
+      console.log('汇总数据处理完成:', overviewData)
     } else {
-      console.warn('⚠️ 汇总数据格式异常:', response)
+      console.warn('⚠汇总数据格式异常:', response)
     }
   } catch (error) {
-    console.error('❌ 汇总数据加载失败:', error)
+    console.error('汇总数据加载失败:', error)
   }
 }
 
-// 修复趋势数据处理 - 保留小数位
+// 修复趋势数据处理
 const loadTrendData = async (city, startDate) => {
   try {
     const response = await operationalEfficiencyApi.getEfficiencyTrend(city, startDate)
-    console.log('📈 趋势数据响应:', response)
-    console.log('📈 第一条数据样例:', response[0])
+    console.log('趋势数据响应:', response)
+    console.log('第一条数据样例:', response[0])
 
     if (Array.isArray(response) && response.length > 0) {
       const processedData = response.map(item => {
@@ -401,7 +398,7 @@ const loadTrendData = async (city, startDate) => {
             dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
             displayDate = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           } else {
-            console.warn('⚠️ 未知日期格式:', typeof item.date, item.date)
+            console.warn('未知日期格式:', typeof item.date, item.date)
             dateStr = String(item.date)
             displayDate = dateStr
           }
@@ -425,7 +422,6 @@ const loadTrendData = async (city, startDate) => {
           date: dateStr,
           efficiencyScore: efficiencyScore,
           avgDeliveryTime: Math.round(item.avg_delivery_time || 0),
-          // 修复：保留1位小数显示
           ordersPerHour: item.avg_orders_per_hour < 1 ? 
             Math.round((item.avg_orders_per_hour || 0) * 10) / 10 : 
             Math.round(item.avg_orders_per_hour || 0),
@@ -454,23 +450,23 @@ const loadTrendData = async (city, startDate) => {
       const maxOrdersPerHour = Math.max(...processedData.map(item => item.rawOrdersPerHour))
       const minOrdersPerHour = Math.min(...processedData.map(item => item.rawOrdersPerHour))
 
-      console.log('📊 每小时订单数统计:')
+      console.log('每小时订单数统计:')
       console.log(`  平均值: ${avgOrdersPerHour.toFixed(2)}`)
       console.log(`  最大值: ${maxOrdersPerHour.toFixed(2)}`)
       console.log(`  最小值: ${minOrdersPerHour.toFixed(2)}`)
 
-      console.log('✅ 趋势数据处理完成:', processedData.length, '天')
+      console.log('趋势数据处理完成:', processedData.length, '天')
       
       // 更新图表
       setTimeout(() => {
         updateTrendChart()
       }, 100)
     } else {
-      console.warn('⚠️ 趋势数据格式异常:', response)
+      console.warn('趋势数据格式异常:', response)
       efficiencyTrendData.value = []
     }
   } catch (error) {
-    console.error('❌ 趋势数据加载失败:', error)
+    console.error('趋势数据加载失败:', error)
     efficiencyTrendData.value = []
   }
 }
@@ -479,7 +475,7 @@ const loadTrendData = async (city, startDate) => {
 const loadDistributionData = async (city, startDate) => {
   try {
     const response = await operationalEfficiencyApi.getDistributionStats(city, startDate)
-    console.log('📊 分布数据响应:', response)
+    console.log('分布数据响应:', response)
 
     // 修复：直接使用response，不检查response.data
     if (Array.isArray(response) && response.length > 0) {
@@ -488,18 +484,18 @@ const loadDistributionData = async (city, startDate) => {
         value: item.count || 0,
         percentage: item.percentage || 0
       }))
-      console.log('✅ 分布数据处理完成:', efficiencyDistributionData.value)
+      console.log('分布数据处理完成:', efficiencyDistributionData.value)
 
       // 更新图表
       setTimeout(() => {
         updateDistributionChart()
       }, 100)
     } else {
-      console.warn('⚠️ 分布数据格式异常:', response)
+      console.warn('分布数据格式异常:', response)
       efficiencyDistributionData.value = []
     }
   } catch (error) {
-    console.error('❌ 分布数据加载失败:', error)
+    console.error('分布数据加载失败:', error)
     efficiencyDistributionData.value = []
   }
 }
@@ -519,8 +515,8 @@ const loadAlertsData = async () => {
       10
     )
     
-    console.log('🚨 低效率告警响应:', lowResponse)
-    console.log('🚨 低效率告警第一条数据:', lowResponse[0])
+    console.log('低效率告警响应:', lowResponse)
+    console.log('低效率告警第一条数据:', lowResponse[0])
     
     if (Array.isArray(lowResponse) && lowResponse.length > 0) {
       lowEfficiencyData.value = lowResponse.map(item => ({
@@ -533,8 +529,8 @@ const loadAlertsData = async () => {
         ordersPerHour: item.ordersPerHour || 0
       }))
       
-      console.log('✅ 低效率告警处理完成:', lowEfficiencyData.value.length, '条数据')
-      console.log('📊 处理后低效率数据样例:', lowEfficiencyData.value.slice(0, 2))
+      console.log('低效率告警处理完成:', lowEfficiencyData.value.length, '条数据')
+      console.log('处理后低效率数据样例:', lowEfficiencyData.value.slice(0, 2))
     } else {
       lowEfficiencyData.value = []
     }
@@ -546,8 +542,8 @@ const loadAlertsData = async () => {
       10
     )
     
-    console.log('🎉 高效率表现响应:', highResponse)
-    console.log('🎉 高效率表现第一条数据:', highResponse[0])
+    console.log('高效率表现响应:', highResponse)
+    console.log('高效率表现第一条数据:', highResponse[0])
     
     if (Array.isArray(highResponse) && highResponse.length > 0) {
       highEfficiencyData.value = highResponse.map(item => ({
@@ -560,15 +556,15 @@ const loadAlertsData = async () => {
         ordersPerHour: item.ordersPerHour || 0
       }))
       
-      console.log('✅ 高效率表现处理完成:', highEfficiencyData.value.length, '条数据')
-      console.log('📊 处理后高效率数据样例:', highEfficiencyData.value.slice(0, 2))
+      console.log('高效率表现处理完成:', highEfficiencyData.value.length, '条数据')
+      console.log('处理后高效率数据样例:', highEfficiencyData.value.slice(0, 2))
     } else {
       highEfficiencyData.value = []
     }
 
-    console.log('✅ 告警数据加载完成 - 低效率:', lowEfficiencyData.value.length, '高效率:', highEfficiencyData.value.length)
+    console.log('告警数据加载完成 - 低效率:', lowEfficiencyData.value.length, '高效率:', highEfficiencyData.value.length)
   } catch (error) {
-    console.error('❌ 告警数据加载失败:', error)
+    console.error('告警数据加载失败:', error)
     lowEfficiencyData.value = []
     highEfficiencyData.value = []
   }

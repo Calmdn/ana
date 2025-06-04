@@ -7,7 +7,7 @@ import java.time.LocalDate;
 @Data
 public class SpatialAnalysisDTO {
     private String city;
-    private LocalDate date;  // 对应数据库的date字段
+    private LocalDate date;
     private BigDecimal lngGrid;
     private BigDecimal latGrid;
     private Long deliveryCount;

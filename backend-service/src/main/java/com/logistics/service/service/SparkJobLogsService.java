@@ -36,7 +36,7 @@ public class SparkJobLogsService {
 
         int result = sparkJobLogsMapper.insertJob(job);
         if (result > 0) {
-            log.info("✅ 保存作业日志成功，作业: {}，已清除缓存", job.getJobName());
+            log.info("保存作业日志成功，作业: {}，已清除缓存", job.getJobName());
         }
         return result;
     }
@@ -53,7 +53,7 @@ public class SparkJobLogsService {
 
         int result = sparkJobLogsMapper.batchInsertJobs(jobList);
         if (result > 0) {
-            log.info("✅ 批量保存作业日志成功，共保存 {} 条，已清除缓存", result);
+            log.info("批量保存作业日志成功，共保存 {} 条，已清除缓存", result);
         }
         return result;
     }
@@ -67,7 +67,7 @@ public class SparkJobLogsService {
                                Integer executionTimeSeconds, String errorMessage) {
         int result = sparkJobLogsMapper.updateJobStatus(id, status, endTime, executionTimeSeconds, errorMessage);
         if (result > 0) {
-            log.info("✅ 更新作业状态成功，ID: {}，已清除缓存", id);
+            log.info("更新作业状态成功，ID: {}，已清除缓存", id);
         }
         return result;
     }
@@ -80,7 +80,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'recent:' + #limit", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getRecentJobLogs(int limit) {
         try {
-            log.info("🔍 查询数据库获取最近作业日志[limit={}]", limit);
+            log.info("查询数据库获取最近作业日志[limit={}]", limit);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findRecentJobs(limit);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -95,7 +95,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'status:' + #status", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobLogsByStatus(String status) {
         try {
-            log.info("🔍 查询数据库获取状态作业日志[status={}]", status);
+            log.info("查询数据库获取状态作业日志[status={}]", status);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findByStatus(status);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -110,7 +110,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'name:' + #jobName", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobLogsByName(String jobName) {
         try {
-            log.info("🔍 查询数据库获取作业日志[jobName={}]", jobName);
+            log.info("查询数据库获取作业日志[jobName={}]", jobName);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findByJobName(jobName);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -141,7 +141,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'successful:' + #limit", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getSuccessfulJobs(int limit) {
         try {
-            log.info("🔍 查询数据库获取成功作业[limit={}]", limit);
+            log.info("查询数据库获取成功作业[limit={}]", limit);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findSuccessfulJobs(limit);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -156,7 +156,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'range:' + #startTime + ':' + #endTime", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobLogsByTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
         try {
-            log.info("🔍 查询数据库获取时间范围作业日志[{} - {}]", startTime, endTime);
+            log.info("查询数据库获取时间范围作业日志[{} - {}]", startTime, endTime);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findByTimeRange(startTime, endTime);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -181,7 +181,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'long_running:' + #thresholdMinutes", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getLongRunningJobs(int thresholdMinutes) {
         try {
-            log.info("🔍 查询数据库获取长时间运行作业[threshold={}分钟]", thresholdMinutes);
+            log.info("查询数据库获取长时间运行作业[threshold={}分钟]", thresholdMinutes);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findLongRunningJobs(thresholdMinutes * 60);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -196,7 +196,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'with_errors:' + #limit", unless = "#result.isEmpty()")
     public List<SparkJobLogsDTO> getJobsWithErrors(int limit) {
         try {
-            log.info("🔍 查询数据库获取有错误的作业[limit={}]", limit);
+            log.info("查询数据库获取有错误的作业[limit={}]", limit);
             List<SparkJobLogs> logs = sparkJobLogsMapper.findJobsWithErrors(limit);
             return logs.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -211,7 +211,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "jobs", key = "'id:' + #id", unless = "#result == null")
     public SparkJobLogsDTO getJobById(Long id) {
         try {
-            log.info("🔍 查询数据库获取作业详情[id={}]", id);
+            log.info("查询数据库获取作业详情[id={}]", id);
             SparkJobLogs job = sparkJobLogsMapper.findById(id);
             return job != null ? convertToDTO(job) : null;
         } catch (Exception e) {
@@ -228,7 +228,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "stats", key = "'statistics'")
     public Map<String, Object> getJobStatistics() {
         try {
-            log.info("🔍 查询数据库获取作业统计信息");
+            log.info("查询数据库获取作业统计信息");
             Map<String, Object> statistics = new HashMap<>();
 
             // 获取总数量
@@ -269,7 +269,7 @@ public class SparkJobLogsService {
     @Cacheable(value = "stats", key = "'trend:' + #days", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getJobExecutionTrend(int days) {
         try {
-            log.info("🔍 查询数据库获取作业执行趋势[days={}]", days);
+            log.info("查询数据库获取作业执行趋势[days={}]", days);
             LocalDateTime startTime = LocalDateTime.now().minusDays(days);
             return sparkJobLogsMapper.getJobExecutionTrend(startTime);
         } catch (Exception e) {
@@ -290,7 +290,7 @@ public class SparkJobLogsService {
             LocalDateTime cutoffTime = LocalDateTime.now().minusDays(daysToKeep);
             int deletedCount = sparkJobLogsMapper.cleanupOldJobs(cutoffTime);
             if (deletedCount > 0) {
-                log.info("✅ 清理旧作业日志完成，删除 {} 条记录，已清除缓存", deletedCount);
+                log.info("清理旧作业日志完成，删除 {} 条记录，已清除缓存", deletedCount);
             }
             return deletedCount;
         } catch (Exception e) {

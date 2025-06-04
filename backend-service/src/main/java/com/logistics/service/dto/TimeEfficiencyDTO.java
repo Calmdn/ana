@@ -7,7 +7,7 @@ import java.time.LocalDate;
 @Data
 public class TimeEfficiencyDTO {
     private String city;
-    private LocalDate date;  // 对应数据库的date字段
+    private LocalDate date;
     private Long totalDeliveries;
     private BigDecimal avgDeliveryTime;
     private Long fastDeliveries;

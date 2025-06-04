@@ -306,7 +306,6 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const handleTrendTypeChange = () => {
-    // 重新调用图表更新，使用当前已有的数据
     if (trendChartInstance && window.currentTrendData) {
         updateTrendChart(window.currentTrendData)
     } else {
@@ -460,10 +459,9 @@ const loadMetrics = async () => {
         const [startDate, endDate] = dateRange.value
         const summary = await costAnalysisApi.getCostSummary(selectedCity.value, startDate)
 
-        console.log('🔍 API返回的成本汇总数据:', summary)
+        console.log('API返回的成本汇总数据:', summary)
 
         if (summary) {
-            // 处理你的实际API响应格式
             let summaryData = summary
             if (summary.data) {
                 summaryData = summary.data
@@ -471,12 +469,10 @@ const loadMetrics = async () => {
                 summaryData = summary[0]
             }
 
-            console.log('🔍 处理后的汇总数据:', summaryData)
-
-            // 根据你的API字段名处理数据
+            console.log('处理后的汇总数据:', summaryData)
             metrics.totalCost = (summaryData.total_orders || summaryData.totalOrders || 0) * (summaryData.avg_cost_per_order || summaryData.avgCostPerOrder || 0)
             metrics.fuelCost = metrics.totalCost * (summaryData.avg_fuel_cost_ratio || summaryData.avgFuelCostRatio || 0)
-            metrics.timeCost = metrics.totalCost * 0.3 // 假设时间成本占30%，或者你可以提供这个字段
+            metrics.timeCost = metrics.totalCost * 0.3
             metrics.costPerOrder = summaryData.avg_cost_per_order || summaryData.avgCostPerOrder || 0
             metrics.costPerKm = summaryData.avg_cost_per_km || summaryData.avgCostPerKm || 0
 
@@ -491,10 +487,10 @@ const loadMetrics = async () => {
 
             metrics.costChange = summaryData.costChange || 0
 
-            console.log('📊 更新后的指标:', metrics)
+            console.log('更新后的指标:', metrics)
         }
     } catch (error) {
-        console.error('🔥 加载关键指标失败:', error)
+        console.error('加载关键指标失败:', error)
         ElMessage.error('加载成本指标失败')
     }
 }
@@ -508,8 +504,8 @@ const loadChartData = async () => {
             costAnalysisApi.getCostAnalysisByCity(selectedCity.value, startDate, endDate)
         ])
 
-        console.log('📈 趋势数据:', trendData)
-        console.log('🥧 分析数据:', analysisData)
+        console.log('趋势数据:', trendData)
+        console.log('分析数据:', analysisData)
 
         updateTrendChart(trendData)
         updatePieChart(analysisData)
@@ -528,7 +524,7 @@ const loadRankingData = async () => {
         const [startDate] = dateRange.value
         const ranking = await costAnalysisApi.getRegionCostRanking(selectedCity.value, startDate, 10)
 
-        console.log('🔍 API返回的排行数据:', ranking)
+        console.log('API返回的排行数据:', ranking)
 
         if (ranking && Array.isArray(ranking)) {
             regionRanking.value = ranking.map(item => ({
@@ -544,7 +540,7 @@ const loadRankingData = async () => {
             regionRanking.value = []
         }
     } catch (error) {
-        console.error('🔥 加载排行数据失败:', error)
+        console.error('加载排行数据失败:', error)
         regionRanking.value = []
     } finally {
         rankingLoading.value = false
@@ -565,7 +561,6 @@ const loadAlertsData = async () => {
     }
 }
 
-// 只修改 loadTableData 方法
 const loadTableData = async () => {
     tableLoading.value = true
     try {
@@ -577,9 +572,9 @@ const loadTableData = async () => {
             limit: 1000
         }
 
-        console.log('🔍 搜索参数:', searchParams)
+        console.log('搜索参数:', searchParams)
         const data = await costAnalysisApi.searchCostAnalysis(searchParams)
-        console.log('🔍 API返回的表格数据:', data)
+        console.log('API返回的表格数据:', data)
 
         if (data && Array.isArray(data)) {
             tableData.value = data.map((item, index) => ({
@@ -603,7 +598,7 @@ const loadTableData = async () => {
             tableData.value = []
         }
     } catch (error) {
-        console.error('🔥 加载表格数据失败:', error)
+        console.error('加载表格数据失败:', error)
         ElMessage.error('加载数据失败')
         tableData.value = []
     } finally {
@@ -615,7 +610,7 @@ const loadTableData = async () => {
 const updateTrendChart = (data) => {
     if (!trendChartInstance) return
 
-    console.log('📈 更新趋势图表，原始数据:', data)
+    console.log('更新趋势图表，原始数据:', data)
 
     // 缓存数据供切换类型时使用
     window.currentTrendData = data
@@ -626,11 +621,11 @@ const updateTrendChart = (data) => {
     } else if (data && typeof data === 'object') {
         chartData = data.data || data.trend || data.list || []
     } else {
-        console.warn('⚠️ 趋势数据格式不正确:', data)
+        console.warn('趋势数据格式不正确:', data)
         chartData = []
     }
 
-    console.log('📈 处理后的图表数据:', chartData)
+    console.log('处理后的图表数据:', chartData)
 
     if (chartData.length === 0) {
         const option = {
@@ -725,7 +720,7 @@ const updateTrendChart = (data) => {
 const updatePieChart = (data) => {
     if (!pieChartInstance) return
 
-    console.log('🥧 更新饼图，原始数据:', data)
+    console.log('更新饼图，原始数据:', data)
 
     let summary = {}
 
@@ -737,7 +732,7 @@ const updatePieChart = (data) => {
         summary = data
     }
 
-    console.log('🥧 处理后的汇总数据:', summary)
+    console.log('处理后的汇总数据:', summary)
 
     // 直接使用API返回的字段，不计算
     const total = Number(summary.totalCost || 0)
@@ -834,7 +829,6 @@ const viewDetail = (row) => {
 
 const analyzeRegion = (row) => {
     ElMessage.info(`开始分析区域 ${row.regionName} 的成本详情`)
-    // 这里可以跳转到更详细的分析页面或打开分析对话框
 }
 
 const refreshData = async () => {

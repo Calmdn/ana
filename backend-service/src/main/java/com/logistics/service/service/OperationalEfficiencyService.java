@@ -37,7 +37,7 @@ public class OperationalEfficiencyService {
 
         int result = operationalEfficiencyMapper.insertEfficiencyMetrics(metrics);
         if (result > 0) {
-            log.info("✅ 保存运营效率数据成功，城市: {}，已清除缓存", metrics.getCity());
+            log.info("保存运营效率数据成功，城市: {}，已清除缓存", metrics.getCity());
         }
         return result;
     }
@@ -55,7 +55,7 @@ public class OperationalEfficiencyService {
 
         int result = operationalEfficiencyMapper.batchInsertEfficiencyMetrics(metricsList);
         if (result > 0) {
-            log.info("✅ 批量保存运营效率数据成功，共保存 {} 条，已清除缓存", result);
+            log.info("批量保存运营效率数据成功，共保存 {} 条，已清除缓存", result);
         }
         return result;
     }
@@ -71,7 +71,7 @@ public class OperationalEfficiencyService {
 
         int result = operationalEfficiencyMapper.updateEfficiencyMetrics(metrics);
         if (result > 0) {
-            log.info("✅ 更新运营效率数据成功，已清除缓存");
+            log.info("更新运营效率数据成功，已清除缓存");
         }
         return result;
     }
@@ -85,7 +85,7 @@ public class OperationalEfficiencyService {
             unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByCity(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取运营效率[city={}]", city);
+            log.info("查询数据库获取运营效率[city={}]", city);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByCityAndDateRange(city, startDate, endDate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -114,7 +114,7 @@ public class OperationalEfficiencyService {
             unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByRegion(Integer regionId, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取区域效率[regionId={}]", regionId);
+            log.info("查询数据库获取区域效率[regionId={}]", regionId);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByRegionAndDateRange(regionId, startDate, endDate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -132,7 +132,7 @@ public class OperationalEfficiencyService {
     public List<OperationalEfficiencyDTO> getEfficiencyByConditions(String city, Integer regionId, Integer courierId,
                                                                     LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取多条件效率[city={}]", city);
+            log.info("查询数据库获取多条件效率[city={}]", city);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByConditions(
                     city, regionId, courierId, startDate, endDate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -157,7 +157,7 @@ public class OperationalEfficiencyService {
     @Cacheable(value = "efficiency", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getEfficiencyByDate(String city, LocalDate date) {
         try {
-            log.info("🔍 查询数据库获取指定日期效率[city={}, date={}]", city, date);
+            log.info("查询数据库获取指定日期效率[city={}, date={}]", city, date);
             List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findByCityAndDate(city, date);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -172,7 +172,7 @@ public class OperationalEfficiencyService {
     @Cacheable(value = "efficiency", key = "'low_alerts:' + #threshold + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getLowEfficiencyAlerts(double threshold, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取低效率警告[threshold={}]", threshold);
+        log.info("查询数据库获取低效率警告[threshold={}]", threshold);
         List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findLowEfficiencyAlerts(threshold, startDate, limit);
         return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -183,7 +183,7 @@ public class OperationalEfficiencyService {
     @Cacheable(value = "efficiency", key = "'high_performance:' + #threshold + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<OperationalEfficiencyDTO> getHighEfficiencyPerformance(double threshold, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取高效率表现[threshold={}]", threshold);
+        log.info("查询数据库获取高效率表现[threshold={}]", threshold);
         List<OperationalEfficiencyMetrics> metrics = operationalEfficiencyMapper.findHighEfficiencyPerformance(threshold, startDate, limit);
         return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -193,7 +193,7 @@ public class OperationalEfficiencyService {
      */
     @Cacheable(value = "efficiency", key = "'latest:' + #city", unless = "#result == null")
     public OperationalEfficiencyDTO getLatestEfficiencyByCity(String city) {
-        log.info("🔍 查询数据库获取最新效率[city={}]", city);
+        log.info("查询数据库获取最新效率[city={}]", city);
         OperationalEfficiencyMetrics metrics = operationalEfficiencyMapper.findLatestByCity(city);
         return metrics != null ? convertToDTO(metrics) : null;
     }
@@ -213,7 +213,7 @@ public class OperationalEfficiencyService {
      */
     @Cacheable(value = "stats", key = "'trend:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityEfficiencyTrend(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取城市效率趋势[city={}]", city);
+        log.info("查询数据库获取城市效率趋势[city={}]", city);
         return operationalEfficiencyMapper.getCityEfficiencyTrend(city, startDate);
     }
 
@@ -223,7 +223,7 @@ public class OperationalEfficiencyService {
     @Cacheable(value = "stats", key = "'courier_ranking:' + #city + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCourierEfficiencyRanking(String city, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取配送员效率排行[city={}]", city);
+        log.info("查询数据库获取配送员效率排行[city={}]", city);
         return operationalEfficiencyMapper.getCourierEfficiencyRanking(city, startDate, limit);
     }
 
@@ -233,7 +233,7 @@ public class OperationalEfficiencyService {
     @Cacheable(value = "stats", key = "'region_ranking:' + #city + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getRegionEfficiencyRanking(String city, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取区域效率排行[city={}]", city);
+        log.info("查询数据库获取区域效率排行[city={}]", city);
         return operationalEfficiencyMapper.getRegionEfficiencyRanking(city, startDate, limit);
     }
 
@@ -242,7 +242,7 @@ public class OperationalEfficiencyService {
      */
     @Cacheable(value = "stats", key = "'distribution:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getEfficiencyDistribution(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取效率分布统计[city={}]", city);
+        log.info("查询数据库获取效率分布统计[city={}]", city);
         return operationalEfficiencyMapper.getEfficiencyDistribution(city, startDate);
     }
 
@@ -251,7 +251,7 @@ public class OperationalEfficiencyService {
      */
     @Cacheable(value = "stats", key = "'summary:' + #city + ':' + #startDate", unless = "#result == null")
     public Map<String, Object> getEfficiencySummary(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取效率汇总统计[city={}]", city);
+        log.info("查询数据库获取效率汇总统计[city={}]", city);
         return operationalEfficiencyMapper.getEfficiencySummary(city, startDate);
     }
 
@@ -261,7 +261,7 @@ public class OperationalEfficiencyService {
     @Cacheable(value = "stats", key = "'comparison:' + #cities.toString() + ':' + #startDate + ':' + #endDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCityEfficiencyComparison(List<String> cities, LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取城市效率对比，城市数: {}", cities.size());
+        log.info("查询数据库获取城市效率对比，城市数: {}", cities.size());
         return operationalEfficiencyMapper.getCityEfficiencyComparison(cities, startDate, endDate);
     }
 
@@ -289,7 +289,7 @@ public class OperationalEfficiencyService {
     public int cleanupOldData(LocalDate cutoffDate) {
         int result = operationalEfficiencyMapper.cleanupOldMetrics(cutoffDate);
         if (result > 0) {
-            log.info("✅ 清理旧运营效率数据成功，删除 {} 条记录，已清除缓存", result);
+            log.info("清理旧运营效率数据成功，删除 {} 条记录，已清除缓存", result);
         }
         return result;
     }

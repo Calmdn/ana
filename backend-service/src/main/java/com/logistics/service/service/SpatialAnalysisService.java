@@ -36,7 +36,7 @@ public class SpatialAnalysisService {
 
         int result = spatialAnalysisMapper.insertSpatialAnalysis(metrics);
         if (result > 0) {
-            log.info("✅ 保存空间分析数据成功，城市: {}，已清除缓存", metrics.getCity());
+            log.info("保存空间分析数据成功，城市: {}，已清除缓存", metrics.getCity());
         }
         return result;
     }
@@ -53,7 +53,7 @@ public class SpatialAnalysisService {
 
         int result = spatialAnalysisMapper.batchInsertSpatialAnalysis(metricsList);
         if (result > 0) {
-            log.info("✅ 批量保存空间分析数据成功，共保存 {} 条，已清除缓存", result);
+            log.info("批量保存空间分析数据成功，共保存 {} 条，已清除缓存", result);
         }
         return result;
     }
@@ -68,7 +68,7 @@ public class SpatialAnalysisService {
 
         int result = spatialAnalysisMapper.updateSpatialAnalysis(metrics);
         if (result > 0) {
-            log.info("✅ 更新空间分析数据成功，已清除缓存");
+            log.info(" 更新空间分析数据成功，已清除缓存");
         }
         return result;
     }
@@ -82,7 +82,7 @@ public class SpatialAnalysisService {
             unless = "#result.isEmpty()")
     public List<SpatialAnalysisDTO> getSpatialAnalysisByCity(String city, LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取空间分析[city={}]", city);
+            log.info(" 查询数据库获取空间分析[city={}]", city);
             List<SpatialAnalysisMetrics> metrics = spatialAnalysisMapper.findByCityAndDateRange(city, startDate, endDate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -97,7 +97,7 @@ public class SpatialAnalysisService {
     @Cacheable(value = "spatial", key = "'date:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<SpatialAnalysisDTO> getSpatialAnalysisByDate(String city, LocalDate date) {
         try {
-            log.info("🔍 查询数据库获取指定日期空间分析[city={}, date={}]", city, date);
+            log.info(" 查询数据库获取指定日期空间分析[city={}, date={}]", city, date);
             List<SpatialAnalysisMetrics> metrics = spatialAnalysisMapper.findByCityAndDate(city, date);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class SpatialAnalysisService {
                                                                  Double minLat, Double maxLat,
                                                                  LocalDate startDate, LocalDate endDate) {
         try {
-            log.info("🔍 查询数据库获取地理范围空间分析[city={}]", city);
+            log.info(" 查询数据库获取地理范围空间分析[city={}]", city);
             List<SpatialAnalysisMetrics> metrics = spatialAnalysisMapper.findByGeoRange(
                     city, minLng, maxLng, minLat, maxLat, startDate, endDate);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -141,7 +141,7 @@ public class SpatialAnalysisService {
             unless = "#result.isEmpty()")
     public List<SpatialAnalysisDTO> getHotspotAnalysis(String city, LocalDate date, int limit) {
         try {
-            log.info("🔍 查询数据库获取热点区域分析[city={}, limit={}]", city, limit);
+            log.info("查询数据库获取热点区域分析[city={}, limit={}]", city, limit);
             List<SpatialAnalysisMetrics> metrics = spatialAnalysisMapper.findHotspotsByCity(city, date, limit);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -156,7 +156,7 @@ public class SpatialAnalysisService {
     @Cacheable(value = "spatial", key = "'density:' + #city + ':' + #date", unless = "#result.isEmpty()")
     public List<SpatialAnalysisDTO> getDensityAnalysis(String city, LocalDate date) {
         try {
-            log.info("🔍 查询数据库获取密度分析[city={}, date={}]", city, date);
+            log.info(" 查询数据库获取密度分析[city={}, date={}]", city, date);
             List<SpatialAnalysisMetrics> metrics = spatialAnalysisMapper.findDensityAnalysisByCity(city, date);
             return metrics.stream().map(this::convertToDTO).collect(Collectors.toList());
         } catch (Exception e) {
@@ -182,7 +182,7 @@ public class SpatialAnalysisService {
     @Cacheable(value = "stats", key = "'delivery_hotspots:' + #city + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getDeliveryDensityHotspots(String city, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取配送密度热点[city={}]", city);
+        log.info(" 查询数据库获取配送密度热点[city={}]", city);
         return spatialAnalysisMapper.getDeliveryDensityHotspots(city, startDate, limit);
     }
 
@@ -191,7 +191,7 @@ public class SpatialAnalysisService {
      */
     @Cacheable(value = "stats", key = "'time_heatmap:' + #city + ':' + #startDate", unless = "#result.isEmpty()")
     public List<Map<String, Object>> getDeliveryTimeHeatmap(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取配送时间热图[city={}]", city);
+        log.info(" 查询数据库获取配送时间热图[city={}]", city);
         return spatialAnalysisMapper.getDeliveryTimeHeatmap(city, startDate);
     }
 
@@ -201,7 +201,7 @@ public class SpatialAnalysisService {
     @Cacheable(value = "stats", key = "'distribution_stats:' + #city + ':' + #startDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getSpatialDistributionStats(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取空间分布统计[city={}]", city);
+        log.info(" 查询数据库获取空间分布统计[city={}]", city);
         return spatialAnalysisMapper.getSpatialDistributionStats(city, startDate);
     }
 
@@ -211,7 +211,7 @@ public class SpatialAnalysisService {
     @Cacheable(value = "stats", key = "'grid_aggregation:' + #city + ':' + #date + ':' + #gridSize",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getGridAggregation(String city, LocalDate date, Double gridSize) {
-        log.info("🔍 查询数据库获取网格聚合[city={}, gridSize={}]", city, gridSize);
+        log.info(" 查询数据库获取网格聚合[city={}, gridSize={}]", city, gridSize);
         return spatialAnalysisMapper.getGridAggregation(city, date, gridSize);
     }
 
@@ -220,7 +220,7 @@ public class SpatialAnalysisService {
      */
     @Cacheable(value = "stats", key = "'summary:' + #city + ':' + #startDate", unless = "#result == null")
     public Map<String, Object> getSpatialSummary(String city, LocalDate startDate) {
-        log.info("🔍 查询数据库获取空间汇总[city={}]", city);
+        log.info(" 查询数据库获取空间汇总[city={}]", city);
         return spatialAnalysisMapper.getSpatialSummary(city, startDate);
     }
 
@@ -230,7 +230,7 @@ public class SpatialAnalysisService {
     @Cacheable(value = "stats", key = "'courier_distribution:' + #city + ':' + #startDate + ':' + #limit",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCourierSpatialDistribution(String city, LocalDate startDate, int limit) {
-        log.info("🔍 查询数据库获取配送员空间分布[city={}]", city);
+        log.info(" 查询数据库获取配送员空间分布[city={}]", city);
         return spatialAnalysisMapper.getCourierSpatialDistribution(city, startDate, limit);
     }
 
@@ -241,7 +241,7 @@ public class SpatialAnalysisService {
             key = "'comparison:' + #cities.toString() + ':' + #startDate + ':' + #endDate",
             unless = "#result.isEmpty()")
     public List<Map<String, Object>> getCitySpatialComparison(List<String> cities, LocalDate startDate, LocalDate endDate) {
-        log.info("🔍 查询数据库获取城市空间对比，城市数: {}", cities.size());
+        log.info(" 查询数据库获取城市空间对比，城市数: {}", cities.size());
         return spatialAnalysisMapper.getCitySpatialComparison(cities, startDate, endDate);
     }
 
@@ -262,7 +262,7 @@ public class SpatialAnalysisService {
     public int cleanupOldData(LocalDate cutoffDate) {
         int result = spatialAnalysisMapper.cleanupOldSpatialData(cutoffDate);
         if (result > 0) {
-            log.info("✅ 清理旧空间分析数据成功，删除 {} 条记录，已清除缓存", result);
+            log.info("清理旧空间分析数据成功，删除 {} 条记录，已清除缓存", result);
         }
         return result;
     }

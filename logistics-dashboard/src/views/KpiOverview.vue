@@ -102,7 +102,7 @@ const dashboardStore = useDashboardStore()
 const loading = ref(false)
 const dateRange = ref([])
 const kpiHistory = ref([])
-const allKpiData = ref([]) // 存储所有数据，用于日期筛选
+const allKpiData = ref([])
 const pagination = ref({
   current: 1,
   pageSize: 20,
@@ -147,12 +147,12 @@ const kpiMetrics = ref([
 
 // 根据日期范围筛选数据
 const filterDataByDateRange = () => {
-  console.log('🔍 筛选数据，日期范围:', dateRange.value)
+  console.log('筛选数据，日期范围:', dateRange.value)
   
   if (!dateRange.value || dateRange.value.length !== 2) {
     // 如果没有选择日期范围，显示所有数据
     kpiHistory.value = [...allKpiData.value]
-    console.log('📊 没有日期筛选，显示所有数据:', kpiHistory.value.length, '条')
+    console.log('没有日期筛选，显示所有数据:', kpiHistory.value.length, '条')
   } else {
     const [startDate, endDate] = dateRange.value
     const start = new Date(startDate)
@@ -164,7 +164,7 @@ const filterDataByDateRange = () => {
       return itemDate >= start && itemDate <= end
     })
     
-    console.log('📊 日期筛选结果:', {
+    console.log('日期筛选结果:', {
       startDate: start.toISOString().split('T')[0],
       endDate: end.toISOString().split('T')[0],
       filteredCount: kpiHistory.value.length,
@@ -184,12 +184,12 @@ const displayedKpiHistory = computed(() => {
   return kpiHistory.value.slice(start, end)
 })
 
-// 修复图表配置 - 根据实际API字段调整
+// 修复图表配置
 const trendChartOptions = computed(() => {
-  console.log('📊 计算图表配置，历史数据长度:', kpiHistory.value.length)
+  console.log('计算图表配置，历史数据长度:', kpiHistory.value.length)
   
   if (!kpiHistory.value || kpiHistory.value.length === 0) {
-    console.log('⚠️ 没有历史数据，返回空图表配置')
+    console.log('没有历史数据，返回空图表配置')
     return {
       title: { text: 'KPI趋势分析 (暂无数据)' },
       tooltip: { trigger: 'axis' },
@@ -229,7 +229,7 @@ const trendChartOptions = computed(() => {
     }
   }
 
-  // 按日期聚合数据（因为API返回的是按小时的数据）
+  // 按日期聚合数据
   const dailyData = {}
   kpiHistory.value.forEach(item => {
     const date = item.date
@@ -382,16 +382,16 @@ const loadKpiData = async (useSpecificDateRange = false) => {
   loading.value = true
   try {
     const city = dashboardStore.selectedCity
-    console.log('🔍 开始加载KPI数据，城市:', city, '使用特定日期范围:', useSpecificDateRange)
+    console.log('开始加载KPI数据，城市:', city, '使用特定日期范围:', useSpecificDateRange)
 
     // 获取今日KPI数据
     try {
       const todayResponse = await kpiApi.getTodayKpi(city)
-      console.log('📊 今日KPI API响应:', todayResponse)
+      console.log('今日KPI API响应:', todayResponse)
       
       if (todayResponse && todayResponse.length > 0) {
-        console.log('📊 今日KPI数据条数:', todayResponse.length)
-        console.log('📊 今日KPI数据样例:', todayResponse.slice(0, 3))
+        console.log('今日KPI数据条数:', todayResponse.length)
+        console.log('今日KPI数据样例:', todayResponse.slice(0, 3))
 
         // 计算今日汇总数据（聚合所有小时的数据）
         const todayTotal = {
@@ -404,9 +404,7 @@ const loadKpiData = async (useSpecificDateRange = false) => {
 
         todayResponse.forEach(hourData => {
           todayTotal.totalOrders += hourData.totalOrders || 0
-          
-          // 这里假设activeCouriers是该小时的配送员ID数组或数量
-          // 如果是数量，我们需要取最大值作为总的活跃配送员数
+
           if (hourData.activeCouriers) {
             todayTotal.activeCouriers.add(hourData.activeCouriers)
           }
@@ -431,7 +429,7 @@ const loadKpiData = async (useSpecificDateRange = false) => {
             : 0
         }
 
-        console.log('📊 计算后的今日汇总KPI:', todayKpi)
+        console.log('计算后的今日汇总KPI:', todayKpi)
 
         // 更新KPI指标卡片
         kpiMetrics.value[0].value = todayKpi.totalOrders
@@ -439,7 +437,7 @@ const loadKpiData = async (useSpecificDateRange = false) => {
         kpiMetrics.value[2].value = todayKpi.ordersPerCourier ? parseFloat(todayKpi.ordersPerCourier.toFixed(1)) : 0
         kpiMetrics.value[3].value = todayKpi.avgEfficiencyScore ? parseFloat(todayKpi.avgEfficiencyScore.toFixed(2)) : 0
 
-        // 计算趋势（对比昨天同期或前一小时）
+        // 计算趋势
         if (todayResponse.length > 1) {
           // 如果有多个小时的数据，取最后两个小时对比
           const currentHour = todayResponse[todayResponse.length - 1]
@@ -452,17 +450,17 @@ const loadKpiData = async (useSpecificDateRange = false) => {
         } else {
           // 如果只有一个小时的数据，设置默认趋势
           kpiMetrics.value.forEach(metric => {
-            metric.trend = Math.random() * 10 - 5 // 随机趋势，实际应该对比昨天同期
+            metric.trend = Math.random() * 10 - 5
           })
         }
 
-        console.log('📊 KPI指标更新完成:', kpiMetrics.value.map(m => ({ 
+        console.log('KPI指标更新完成:', kpiMetrics.value.map(m => ({
           title: m.title, 
           value: m.value, 
           trend: m.trend 
         })))
       } else {
-        console.warn('⚠️ 今日KPI数据为空')
+        console.warn('今日KPI数据为空')
         // 设置默认值
         kpiMetrics.value.forEach(metric => {
           metric.value = 0
@@ -470,7 +468,7 @@ const loadKpiData = async (useSpecificDateRange = false) => {
         })
       }
     } catch (error) {
-      console.error('❌ 获取今日KPI失败:', error)
+      console.error('获取今日KPI失败:', error)
       ElMessage.error('获取今日KPI数据失败: ' + error.message)
       // 设置默认值
       kpiMetrics.value.forEach(metric => {
@@ -479,17 +477,17 @@ const loadKpiData = async (useSpecificDateRange = false) => {
       })
     }
 
-    // 获取历史数据的逻辑保持不变...
+    // 获取历史数据的逻辑
     try {
       let trendResponse
       
       if (useSpecificDateRange && dateRange.value && dateRange.value.length === 2) {
         const daysDiff = Math.ceil((new Date(dateRange.value[1]) - new Date(dateRange.value[0])) / (1000 * 60 * 60 * 24)) + 1
         trendResponse = await kpiApi.getRecentKpi(city, Math.max(daysDiff, 30))
-        console.log('📈 指定日期范围趋势数据API响应长度:', trendResponse?.length || 0)
+        console.log('指定日期范围趋势数据API响应长度:', trendResponse?.length || 0)
       } else {
         trendResponse = await kpiApi.getRecentKpi(city, 30)
-        console.log('📈 默认趋势数据API响应长度:', trendResponse?.length || 0)
+        console.log('默认趋势数据API响应长度:', trendResponse?.length || 0)
       }
       
       if (trendResponse && trendResponse.length > 0) {
@@ -513,24 +511,24 @@ const loadKpiData = async (useSpecificDateRange = false) => {
             return dateCompare
           })
 
-        console.log('📈 处理后的所有数据长度:', allKpiData.value.length)
+        console.log('处理后的所有数据长度:', allKpiData.value.length)
         filterDataByDateRange()
       } else {
-        console.warn('⚠️ 未获取到有效的趋势数据')
+        console.warn('未获取到有效的趋势数据')
         allKpiData.value = []
         kpiHistory.value = []
       }
     } catch (error) {
-      console.error('❌ 获取趋势数据失败:', error)
+      console.error('获取趋势数据失败:', error)
       ElMessage.error('获取趋势数据失败: ' + error.message)
       allKpiData.value = []
       kpiHistory.value = []
     }
 
-    console.log('✅ KPI数据加载完成')
+    console.log('KPI数据加载完成')
 
   } catch (error) {
-    console.error('❌ 加载KPI数据失败:', error)
+    console.error('加载KPI数据失败:', error)
     ElMessage.error('加载KPI数据失败: ' + error.message)
   } finally {
     loading.value = false
@@ -538,12 +536,12 @@ const loadKpiData = async (useSpecificDateRange = false) => {
 }
 
 const refreshData = () => {
-  console.log('🔄 手动刷新KPI数据')
+  console.log('手动刷新KPI数据')
   loadKpiData()
 }
 
 const handleDateChange = (dates) => {
-  console.log('📅 日期范围改变:', dates)
+  console.log('日期范围改变:', dates)
   dateRange.value = dates
   
   if (allKpiData.value.length > 0) {
@@ -565,7 +563,7 @@ const handleCurrentChange = (page) => {
 }
 
 onMounted(() => {
-  console.log('🚀 KpiOverview组件已挂载，开始加载数据')
+  console.log('KpiOverview组件已挂载，开始加载数据')
   loadKpiData()
 })
 </script>
